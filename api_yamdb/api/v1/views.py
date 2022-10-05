@@ -10,23 +10,6 @@ from users.models import User
 from users.utils import generate_activation_code, send_mail_in_user
 
 
-# def generate_activation_code():
-#     return ''.join(
-#         random.choice(string.ascii_uppercase + string.digits) for x in range(6)
-#     )
-#
-#
-# def send_mail_in_user(username, code):
-#     user = get_object_or_404(User, username=username)
-#     send_mail(
-#         'Confirmation_code',
-#         f'Добро пожаловать,{user.username}!'
-#         f' Ваш код для получения JWT-токена: {code}',
-#         'api@mail.ru',
-#         [f'{user.email}']
-#     )
-
-
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def send_code(request):
