@@ -1,14 +1,12 @@
-from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from users.models import User
 
-class UserAuthSerializer(serializers.ModelSerializer):
-    """Сериализатор для авторизации пользователя."""
 
-    class Meta:
-        model = User
-        fields = ('username', 'email',)
+class SendMailSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    username = serializers.CharField(required=True)
 
     def validate(self, data):
         if User.objects.filter(username=data['username']).exists():
@@ -22,3 +20,8 @@ class UserAuthSerializer(serializers.ModelSerializer):
                 'Такая электронная почта уже зарегистрирована'
             )
         return data
+
+
+class ApiTokenSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    code = serializers.CharField(required=True)
