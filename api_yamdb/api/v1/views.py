@@ -1,16 +1,20 @@
 from django.contrib.auth.hashers import check_password, make_password
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, permissions, viewsets, filters
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.generics import get_object_or_404
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .permissions import UserAdminOnly
-from .serializers import SendMailSerializer, ApiTokenSerializer, \
-    UsersSerializer, UserMeSerializer
+from .serializers import (
+    SendMailSerializer,
+    ApiTokenSerializer,
+    UserSerializer,
+)
 from users.models import User
 from users.utils import generate_activation_code, send_mail_in_user
+from .permissions import AdminOnly
 
 
 @api_view(['POST'])
@@ -50,32 +54,31 @@ def get_jwt_token(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UsersViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.IsAuthenticated, UserAdminOnly)
+class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = UsersSerializer
-    lookup_field = 'username'
-    pagination_class = LimitOffsetPagination
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('username',)
+    serializer_class = UserSerializer
+    permission_classes = (permissions.IsAuthenticated, AdminOnly,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('username',)
 
     @action(
+        methods=['GET', 'PATCH'],
         detail=False,
-        methods=['get', 'patch'],
-        url_path='me',
-        permission_classes=[permissions.IsAuthenticated],
-    )
-    def me(self, request):
-        if self.request.method == 'PATCH':
-            user = self.request.user
-            serializer = UserMeSerializer(user, data=request.data,
-                                          partial=True)
+        permission_classes=(permissions.IsAuthenticated, AdminOnly,),
+        url_path='me')
+    def get_current_user_info(self, request):
+        serializer = UserSerializer(request.user)
+        if 'role' in request.data:
+            return Response(serializer.data,
+                            status=status.HTTP_400_BAD_REQUEST)
+        if request.method == 'PATCH':
+            serializer = UserSerializer(
+                request.user,
+                data=request.data,
+                partial=True)
+
             serializer.is_valid(raise_exception=True)
-            serializer.save(
-                username=self.request.user.username,
-                email=self.request.user.email
-            )
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-        user = self.request.user
-        serializer = UserMeSerializer(user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.data)

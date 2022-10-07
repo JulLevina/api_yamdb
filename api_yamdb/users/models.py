@@ -17,5 +17,8 @@ class User(AbstractUser):
     bio = models.TextField(max_length=300, blank=True)
     confirmation_code = models.CharField(max_length=78, default='000000')
     role = models.CharField(max_length=9, choices=ROLES, default='user')
-    is_active = models.BooleanField('active', default=False)
+    is_active = models.BooleanField('active', default=True)
+
+    def __str__(self):
+        return self.username
 

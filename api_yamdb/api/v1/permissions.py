@@ -1,7 +1,6 @@
 from rest_framework import permissions
-from rest_framework.permissions import SAFE_METHODS
 
 
-class UserAdminOnly(permissions.BasePermission):
+class AdminOnly(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.role == 'admin' or request.user.is_staff
+        return request.user.role == 'admin' or request.user.is_staff or request.user.is_superuser

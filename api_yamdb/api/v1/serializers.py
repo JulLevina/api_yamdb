@@ -38,20 +38,13 @@ class ApiTokenSerializer(serializers.Serializer):
     confirmation_code = serializers.CharField(required=True)
 
 
-class UserMeSerializer(serializers.ModelSerializer):
-    role = serializers.StringRelatedField(read_only=True)
-
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
-        )
-
-
-class UsersSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = (
-            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
-        )
-        lookup_field = 'username'
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role',)
