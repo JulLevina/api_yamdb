@@ -3,17 +3,25 @@ from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
-from reviews.models import Title, Genre, Category, Review, Comment
+from djoser.serializers import UserSerializer
+
+from reviews.models import Title, Genre, Category, Review, Comment, User
 
 
 class TitleSerializer(serializers.ModelSerializer):
+    average_rating = serializers.SerializerMethodField()
+    
+    def get_average_rating(self, obj):
+        return int(obj.average_rating)
+
     class Meta:
         fields = (
             'name',
             'year',
             'description',
             'genre',
-            'category'
+            'category',
+            'average_rating'
         )
         model = Title
 
@@ -29,8 +37,8 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
 
 class CategorySerializer(serializers.ModelSerializer):
-    category_name = serializers.CharField(source='name')
-    category_slug = serializers.SlugField(source='slug')
+    # category_name = serializers.CharField(source='name')
+    # category_slug = serializers.SlugField(source='slug')
 
     class Meta:
         fields = (
@@ -49,14 +57,25 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         fields = (
+            'id',
             'text',
-            'score'
+            'title',
+            'author',
+            'score',
+            'pub_date'
         )
         read_only_fields = ('title',)
         model = Review
-    
-    # def get_rating(self, obj):
-    #     return sum(obj.score) // obj.score.count()
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Review.objects.all(),
+                fields=('author', 'text'),
+                message=( 
+                    'Отзыв на указанное произведение '
+                    'уже Вами опубликован.'
+                ) 
+            )
+        ]
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -70,3 +89,4 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = 'text'
         read_only_fields = ('review',)
         model = Comment
+
