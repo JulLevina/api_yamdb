@@ -1,11 +1,13 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import Avg
 from django.db import models
 
-User = get_user_model()
-
 ANONYMOUS_USER_ID = 1
+
+
+class User(AbstractUser):
+    pass
 
 
 class Review(models.Model):

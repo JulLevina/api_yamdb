@@ -24,7 +24,7 @@ class TitleViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = TitleSerializer
 
     def get_queryset(self):
-        return Title.objects.annotate(_average_rating=Avg('reviews__score')) # order_by('-score_avg')
+        return Title.objects.annotate(_average_rating=Avg('reviews__score'))  # order_by('-score_avg')
 
 
 class GenreViewSet(viewsets.ReadOnlyModelViewSet):
@@ -67,4 +67,3 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         review = get_object_or_404(Review, pk=self.kwargs['review_id'])
         serializer.save(author=self.request.user, review=review)
-
