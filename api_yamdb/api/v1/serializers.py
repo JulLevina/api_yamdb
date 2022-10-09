@@ -5,17 +5,41 @@ from rest_framework.exceptions import ValidationError
 
 from djoser.serializers import UserSerializer
 
-from reviews.models import Title, Genre, Category, Review, Comment, User
+from reviews.models import Title, Genre, Category, Review, Comment
+from users.models import User
+
+
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = (
+            'name',
+            'slug'
+        )
+        model = Category
+
+
+class GenreSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = (
+            'name',
+            'slug'
+        )
+        model = Genre
 
 
 class TitleSerializer(serializers.ModelSerializer):
     average_rating = serializers.SerializerMethodField()
+    category=CategorySerializer(read_only=True)
+    genre=GenreSerializer(many=True)
     
     def get_average_rating(self, obj):
         return int(obj.average_rating)
 
     class Meta:
         fields = (
+            'id',
             'name',
             'year',
             'description',
@@ -26,26 +50,27 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
 
 
-class GenreSerializer(serializers.ModelSerializer):
-    # genre_name = serializers.CharField(source='name')
+class CreateTitleSerializer(serializers.ModelSerializer):
+    category=serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Category.objects.all()
+    )
+    genre=serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Genre.objects.all(),
+        many=True
+    )
 
     class Meta:
         fields = (
-            'name',  # genre_name
-            'slug'
+            'id',
+            'name',
+            'year',
+            'description',
+            'genre',
+            'category'
         )
-        model = Genre
-
-class CategorySerializer(serializers.ModelSerializer):
-    # category_name = serializers.CharField(source='name')
-    # category_slug = serializers.SlugField(source='slug')
-
-    class Meta:
-        fields = (
-            'name',  # category_name
-            'slug'  # category_slug
-        )
-        model = Category
+        model = Title
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -59,7 +84,6 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'text',
-            'title',
             'author',
             'score',
             'pub_date'
@@ -86,8 +110,12 @@ class CommentSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = 'text'
-        read_only_fields = ('review',)
+        fields = (
+            'id',
+            'author',
+            'text',
+            'pub_date'
+            )
         model = Comment
 
 

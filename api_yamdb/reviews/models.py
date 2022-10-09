@@ -1,13 +1,8 @@
-from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import Avg
 from django.db import models
 
-ANONYMOUS_USER_ID = 1
-
-
-class User(AbstractUser):
-    pass
+from users.models import User
 
 
 class Review(models.Model):
@@ -45,13 +40,15 @@ class Title(models.Model):
     genre = models.ManyToManyField(
         'Genre',
         through='TitleGenre',
+        related_name='genre',
         verbose_name='жанр'
     )
     category = models.ForeignKey(
         'Category',
-        default=ANONYMOUS_USER_ID,
-        on_delete=models.SET_DEFAULT,
-        related_name='titles',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='category',
         verbose_name='категория'
     )
 
@@ -71,18 +68,15 @@ class Title(models.Model):
 class TitleGenre(models.Model):
     genre = models.ForeignKey(
         'Genre',
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='titles',
-        verbose_name='жанр'
+        on_delete=models.CASCADE
     )
     title = models.ForeignKey(
         Title,
-        default=ANONYMOUS_USER_ID,
-        on_delete=models.SET_DEFAULT,
-        related_name='genres',
+        on_delete=models.CASCADE,
     )
+
+    def __str__(self):
+        return f'{self.title} {self.genre}'
 
 
 class Category(models.Model):
@@ -97,7 +91,7 @@ class Category(models.Model):
     )
 
     def __str__(self) -> str:
-        return self.name
+        return f'{self.name} {self.name}'
 
 
 class Genre(models.Model):
@@ -112,7 +106,7 @@ class Genre(models.Model):
     description = models.TextField(verbose_name='Описание')
 
     def __str__(self) -> str:
-        return self.name
+        return f'{self.name} {self.name}'
 
 
 class Comment(models.Model):

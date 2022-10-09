@@ -13,6 +13,28 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
         )
 
 
+class ReadOnly(permissions.BasePermission):
+    """Правом создания контента наделен только администратор."""
+
+    message = (
+        'Для создания контента необходимо '
+        'обладать правами администратора')
+
+    def has_permission(self, request, view):
+        return request.method in permissions.SAFE_METHODS
+
+
+class IsStaffOrReadOnly(permissions.BasePermission):
+    """Правом создания контента наделен только администратор."""
+
+    message = (
+        'Для создания контента необходимо '
+        'обладать правами администратора')
+
+    def has_permission(self, request, view):
+        request.user.role == 'admin'
+  
+
 class AdminOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.role == 'admin' or request.user.is_staff or request.user.is_superuser
