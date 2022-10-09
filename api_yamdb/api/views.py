@@ -1,26 +1,29 @@
-# from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
-# from rest_framework.permissions import IsAuthenticated
-# from rest_framework.mixins import CreateModelMixin, ListModelMixin
-# from rest_framework.pagination import LimitOffsetPagination
-# from rest_framework.filters import SearchFilter
+from rest_framework import mixins
+from rest_framework.permissions import IsAuthenticated
 
-from v1.models import Title, Categories, Genres
+from v1.models import Title, Category, Genre
 from .serializers import TitleSerializer, CategoriesSerializer
 from .serializers import GenresSerializer
-# from .permissions import IsOwnerOrReadOnly
+from .permissions import OwnerOrReadOnly
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
+    permission_classes = [OwnerOrReadOnly & IsAuthenticated] 
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
 
-class CategoriesViewSet(viewsets.ModelViewSet):
-    queryset = Categories.objects.all()
+class CategoriesViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
+                        mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    queryset = Category.objects.all()
     serializer_class = CategoriesSerializer
+    permission_classes = [OwnerOrReadOnly & IsAuthenticated] 
 
 
-class GenresViewSet(viewsets.ModelViewSet):
-    queryset = Genres.objects.all()
+class GenresViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
+                    mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    queryset = Genre.objects.all()
     serializer_class = GenresSerializer
+    permission_classes = [OwnerOrReadOnly & IsAuthenticated] 

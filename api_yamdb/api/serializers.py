@@ -1,21 +1,21 @@
 from rest_framework import serializers
 
-from v1.models import Title, Categories, Genres
+from v1.models import Title, Genre, Category
 
 
 class TitleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'description', 'genre', 'category')
+        fields = ('name', 'year', 'description', 'genre', 'category')
  
 
 class CategoriesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Categories
+        model = Category
         fields = ('name', 'slug')
 
 
 class GenresSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Genres
-        fields = ('name', 'slug', 'description')
+        model = Genre
+        fields = ('name', 'slug')
