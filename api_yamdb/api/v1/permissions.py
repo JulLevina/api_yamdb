@@ -6,10 +6,15 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
 
     message = 'Вы не являетесь автором изменяемого контента!'
 
-    def has_object_permission(self, request, view, review):
+    # def has_permission(self, request, view):
+    #     (request.method in permissions.SAFE_METHODS
+    #             or (request.user.is_authenticated
+    #                 and request.user.role == 'user'))
+    
+    def has_object_permission(self, request, view, obj):
         return (
             request.method in permissions.SAFE_METHODS
-            or review.author == request.user
+            or obj.author == request.user
         )
 
 
@@ -32,7 +37,9 @@ class IsStaffOrReadOnly(permissions.BasePermission):
         'обладать правами администратора')
 
     def has_permission(self, request, view):
-        request.user.role == 'admin'
+        return (request.method in permissions.SAFE_METHODS
+                or (request.user.is_authenticated
+                    and request.user.role == 'admin'))
   
 
 class AdminOnly(permissions.BasePermission):

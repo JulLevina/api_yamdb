@@ -1,3 +1,4 @@
+
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
@@ -30,12 +31,15 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    average_rating = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
     category=CategorySerializer(read_only=True)
     genre=GenreSerializer(many=True)
     
-    def get_average_rating(self, obj):
-        return int(obj.average_rating)
+    def get_rating(self, obj):
+        rating = obj.average_rating
+        if not rating:
+            return rating
+        return round(rating, 1)
 
     class Meta:
         fields = (
@@ -45,7 +49,7 @@ class TitleSerializer(serializers.ModelSerializer):
             'description',
             'genre',
             'category',
-            'average_rating'
+            'rating'
         )
         model = Title
 
@@ -77,7 +81,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True,
         default=serializers.CurrentUserDefault(),
-        slug_field='username'
+        slug_field='username',
     )
 
     class Meta:
@@ -90,16 +94,17 @@ class ReviewSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('title',)
         model = Review
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Review.objects.all(),
-                fields=('author', 'text'),
-                message=( 
-                    'Отзыв на указанное произведение '
-                    'уже Вами опубликован.'
-                ) 
-            )
-        ]
+
+        def validate(self, attrs):
+            self._kwargs['partial'] = True
+            return super().validate(attrs)
+        
+        def validate(self, data):
+            if data == self.context['request'].title:
+                raise serializers.ValidationError(
+                    'Подписка на самого себя невозможна!'
+                )
+            return data
 
 
 class CommentSerializer(serializers.ModelSerializer):

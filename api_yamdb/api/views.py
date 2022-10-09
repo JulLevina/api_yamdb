@@ -1,14 +1,14 @@
 from django.contrib.auth.hashers import check_password, make_password
+from django.db.models import Avg
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from django.db.models import Avg
 from rest_framework import status, viewsets, filters
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework_simplejwt.tokens import AccessToken
+from uritemplate import partial
 
 from reviews.models import Title, Genre, Category, Review
 from users.models import User
@@ -28,9 +28,11 @@ from api.v1.permissions import IsAuthorOrReadOnly, AdminOnly, IsStaffOrReadOnly,
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAdminUser | ReadOnly,)
+    permission_classes = (IsStaffOrReadOnly | ReadOnly,)
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
+    # filter_backends =
+    # search_fields =
 
     def get_queryset(self):
         return Title.objects.annotate(_average_rating=Avg('reviews__score'))  # order_by('-score_avg')
@@ -42,11 +44,13 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAdminUser | ReadOnly,)
+    permission_classes = (IsStaffOrReadOnly | ReadOnly,)
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
 
-    @action(detail=False, methods=['delete'], url_path=r'(?P<slug>\w+)')
+    @action(detail=False, methods=['delete'], url_path=r'(?P<slug>\w+)', lookup_field='slug')
     def genre_delete(self, request, slug):
         genre = self.get_object()
         serializer=GenreSerializer(genre)
@@ -55,11 +59,13 @@ class GenreViewSet(viewsets.ModelViewSet):
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAdminUser | ReadOnly,)
+    permission_classes = (IsStaffOrReadOnly | ReadOnly,)
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
 
-    @action(detail=False, methods=['delete'], url_path=r'(?P<slug>\w+)')
+    @action(detail=False, methods=['delete'], url_path=r'(?P<slug>\w+)', lookup_field='slug')
     def category_delete(self, request, slug):
         category = self.get_object()
         serializer=CategorySerializer(category)
@@ -68,8 +74,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAuthorOrReadOnly | IsStaffOrReadOnly | AdminOnly,)
-    pagination_class = LimitOffsetPagination
+    permission_classes = (IsAuthenticatedOrReadOnly | IsAuthorOrReadOnly | AdminOnly,)
     serializer_class = ReviewSerializer
     http_method_names = ['get', 'post', 'patch', 'delete']
 
@@ -80,11 +85,16 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs['title_id'])
         serializer.save(author=self.request.user, title=title)
+    
+    # def partial_update(self, request, *args, **kwargs):
+    #     serializer = ReviewSerializer(request.user, data=request.data, partial=True)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(serializer.data)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAuthorOrReadOnly | IsStaffOrReadOnly | AdminOnly,)
-    pagination_class = LimitOffsetPagination
+    permission_classes = (IsAuthorOrReadOnly | AdminOnly,)
     serializer_class = CommentSerializer
     http_method_names = ['get', 'post', 'patch', 'delete']
 
@@ -95,6 +105,13 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         review = get_object_or_404(Review, pk=self.kwargs['review_id'])
         serializer.save(author=self.request.user, review=review)
+    
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.serializer_class(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        new_instance = serializer.save()
+        return Response(serializer.data)
 
 
 @api_view(['POST'])
