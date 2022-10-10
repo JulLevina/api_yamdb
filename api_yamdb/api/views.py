@@ -6,9 +6,8 @@ from rest_framework import status, viewsets, filters
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import  AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework_simplejwt.tokens import AccessToken
-from uritemplate import partial
 
 from reviews.models import Title, Genre, Category, Review
 from users.models import User
@@ -74,17 +73,18 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAuthenticatedOrReadOnly | IsAuthorOrReadOnly | AdminOnly,)
+    permission_classes = (IsAuthorOrReadOnly | AdminOnly | IsAuthenticatedOrReadOnly,)
     serializer_class = ReviewSerializer
     http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_queryset(self):
-        title = get_object_or_404(Title, pk=self.kwargs['title_id'])
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
         return title.reviews.all()
 
     def perform_create(self, serializer):
-        title = get_object_or_404(Title, pk=self.kwargs['title_id'])
+        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
         serializer.save(author=self.request.user, title=title)
+    
     
     # def partial_update(self, request, *args, **kwargs):
     #     serializer = ReviewSerializer(request.user, data=request.data, partial=True)
@@ -94,7 +94,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    permission_classes = (IsAuthorOrReadOnly | AdminOnly,)
+    permission_classes = (IsAuthorOrReadOnly | AdminOnly | IsAuthenticatedOrReadOnly,)
     serializer_class = CommentSerializer
     http_method_names = ['get', 'post', 'patch', 'delete']
 
@@ -106,12 +106,12 @@ class CommentViewSet(viewsets.ModelViewSet):
         review = get_object_or_404(Review, pk=self.kwargs['review_id'])
         serializer.save(author=self.request.user, review=review)
     
-    def partial_update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.serializer_class(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        new_instance = serializer.save()
-        return Response(serializer.data)
+    # def partial_update(self, request, *args, **kwargs):
+    #     instance = self.get_object()
+    #     serializer = self.serializer_class(instance, data=request.data, partial=True)
+    #     serializer.is_valid(raise_exception=True)
+    #     new_instance = serializer.save()
+    #     return Response(serializer.data)
 
 
 @api_view(['POST'])

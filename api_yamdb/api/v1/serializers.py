@@ -1,4 +1,5 @@
 
+from requests import request
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
@@ -81,8 +82,9 @@ class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True,
         default=serializers.CurrentUserDefault(),
-        slug_field='username',
+        slug_field='username'
     )
+    
 
     class Meta:
         fields = (
@@ -92,18 +94,15 @@ class ReviewSerializer(serializers.ModelSerializer):
             'score',
             'pub_date'
         )
-        read_only_fields = ('title',)
         model = Review
-
-        def validate(self, attrs):
-            self._kwargs['partial'] = True
-            return super().validate(attrs)
         
         def validate(self, data):
-            if data == self.context['request'].title:
-                raise serializers.ValidationError(
-                    'Подписка на самого себя невозможна!'
-                )
+            if self.context['request'].method == 'POST':
+                return data
+            title_id = self.context['view'].get('title_id')
+            user = self.context['request'].user  
+            if Review.objects.filter(author_id=user.id, title_id=title_id).exists():
+                raise serializers.ValidationError('custom error message')
             return data
 
 

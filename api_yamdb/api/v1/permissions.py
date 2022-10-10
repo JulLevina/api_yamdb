@@ -5,11 +5,6 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
     """Правом редактирования контента наделены только авторы."""
 
     message = 'Вы не являетесь автором изменяемого контента!'
-
-    # def has_permission(self, request, view):
-    #     (request.method in permissions.SAFE_METHODS
-    #             or (request.user.is_authenticated
-    #                 and request.user.role == 'user'))
     
     def has_object_permission(self, request, view, obj):
         return (
