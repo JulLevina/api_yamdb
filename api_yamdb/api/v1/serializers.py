@@ -1,10 +1,7 @@
-
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework.exceptions import ValidationError
-
-from djoser.serializers import UserSerializer
 
 from reviews.models import Title, Genre, Category, Review, Comment
 from users.models import User
@@ -156,6 +153,9 @@ class SendMailSerializer(serializers.ModelSerializer):
 class ApiTokenSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     confirmation_code = serializers.CharField(required=True)
+
+    class Meta:
+        fields = ('username', 'email')
 
 
 class UserSerializer(serializers.ModelSerializer):
