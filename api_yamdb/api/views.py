@@ -154,14 +154,14 @@ def get_jwt_token(request):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated, AdminOnly,)
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('username',)
+    permission_classes = (AdminOnly,)
+    search_fields = ('^username',)
+    lookup_field = 'username'
 
     @action(
         methods=['GET', 'PATCH'],
         detail=False,
-        permission_classes=(IsAuthenticated, AdminOnly,),
+        permission_classes=(IsAuthenticated,),
         url_path='me')
     def get_current_user_info(self, request):
         serializer = UserSerializer(request.user)
