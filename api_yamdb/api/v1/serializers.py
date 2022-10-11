@@ -1,12 +1,7 @@
 import datetime as dt
 
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from rest_framework.relations import SlugRelatedField
-from rest_framework.validators import UniqueTogetherValidator
 from rest_framework.exceptions import ValidationError
-
-from djoser.serializers import UserSerializer
 
 from reviews.models import Title, Genre, Category, Review, Comment
 from users.models import User
@@ -34,9 +29,9 @@ class GenreSerializer(serializers.ModelSerializer):
 
 class TitleSerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField()
-    category=CategorySerializer(read_only=True)
-    genre=GenreSerializer(many=True)
-    
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(many=True)
+
     def get_rating(self, obj):
         rating = obj.average_rating
         if not rating:
@@ -57,11 +52,11 @@ class TitleSerializer(serializers.ModelSerializer):
 
 
 class CreateTitleSerializer(serializers.ModelSerializer):
-    category=serializers.SlugRelatedField(
+    category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all()
     )
-    genre=serializers.SlugRelatedField(
+    genre = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Genre.objects.all(),
         many=True
@@ -109,9 +104,8 @@ class ReviewSerializer(serializers.ModelSerializer):
             if Review.objects.filter(author=author, title=title_id).exists():
                 raise serializers.ValidationError(
                     'Вы уже оставили отзыв на данное произведение.'
-                    )
+                )
         return data
-
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -127,7 +121,7 @@ class CommentSerializer(serializers.ModelSerializer):
             'author',
             'text',
             'pub_date'
-            )
+        )
         model = Comment
 
 
@@ -163,6 +157,9 @@ class SendMailSerializer(serializers.ModelSerializer):
 class ApiTokenSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     confirmation_code = serializers.CharField(required=True)
+
+    class Meta:
+        fields = ('username', 'email')
 
 
 class UserSerializer(serializers.ModelSerializer):

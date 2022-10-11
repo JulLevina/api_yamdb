@@ -5,14 +5,17 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets, filters
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
-from rest_framework.permissions import  AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework_simplejwt.tokens import AccessToken
-from uritemplate import partial  # новое
 
 from reviews.models import Title, Genre, Category, Review
 from users.models import User
 from users.utils import generate_activation_code, send_mail_in_user
-from api.v1.serializers import(
+from api.v1.serializers import (
     TitleSerializer,
     CreateTitleSerializer,
     GenreSerializer,
@@ -24,14 +27,8 @@ from api.v1.serializers import(
     UserSerializer,
 )
 from api.v1.permissions import AdminOnly, IsAuthorOrStaffOrReadOnly, ReadOnly
-from core.filters.filters import TitleGenreFilter
+from core.filters.title_filters import TitleGenreFilter
 
-
-class CustomSearchFilter(filters.SearchFilter):
-    def get_search_fields(self, view, request):
-        if request.query_params.get('genre_slug'):
-            return ['genre']
-        return super().get_search_fields(view, request)
 
 class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = (AdminOnly | ReadOnly,)
@@ -41,7 +38,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     filterset_class = TitleGenreFilter
 
     def get_queryset(self):
-        return Title.objects.annotate(_average_rating=Avg('reviews__score'))  # order_by('-score_avg')
+        return Title.objects.annotate(_average_rating=Avg('reviews__score'))
 
     def get_serializer_class(self):
         if self.request.method in ('POST', 'PATCH'):
@@ -56,10 +53,10 @@ class GenreViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
-    @action(detail=False, methods=['delete'], url_path=r'(?P<slug>\w+)', lookup_field='slug')
+    @action(detail=False, methods=['delete'],
+            url_path=r'(?P<slug>\w+)', lookup_field='slug')
     def genre_delete(self, request, slug):
         genre = self.get_object()
-        serializer=GenreSerializer(genre)
         genre.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -71,10 +68,10 @@ class CategoryViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
-    @action(detail=False, methods=['delete'], url_path=r'(?P<slug>\w+)', lookup_field='slug')
+    @action(detail=False, methods=['delete'],
+            url_path=r'(?P<slug>\w+)', lookup_field='slug')
     def category_delete(self, request, slug):
         category = self.get_object()
-        serializer=CategorySerializer(category)
         category.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -147,14 +144,14 @@ def get_jwt_token(request):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated, AdminOnly,)
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('username',)
+    permission_classes = (AdminOnly,)
+    search_fields = ('^username',)
+    lookup_field = 'username'
 
     @action(
         methods=['GET', 'PATCH'],
         detail=False,
-        permission_classes=(IsAuthenticated, AdminOnly,),
+        permission_classes=(IsAuthenticated,),
         url_path='me')
     def get_current_user_info(self, request):
         serializer = UserSerializer(request.user)

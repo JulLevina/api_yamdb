@@ -17,14 +17,14 @@ DATA_LIST = {
     Comment: 'comments.csv'
 }
 
-FOREIGN_KEY_fIELDS = ('author', 'category')
 
 class Command(BaseCommand):
     """Загружает csv-данные в базу данных."""
-    
+
     def handle(self, *args, **kwargs):
         for model, csv_data in DATA_LIST.items():
-            with open(os.path.join(settings.BASE_DIR, f'static/data/{csv_data}'), 'r', encoding='utf8') as file_scv:
+            with open(os.path.join(settings.BASE_DIR,
+                      f'static/data/{csv_data}'),
+                      'r', encoding='utf8') as file_scv:
                 csv_reader = csv.DictReader(file_scv)
                 model.objects.bulk_create(model(**data) for data in csv_reader)
-
