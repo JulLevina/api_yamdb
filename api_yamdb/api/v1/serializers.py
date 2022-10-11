@@ -1,5 +1,6 @@
+import datetime as dt
 
-from requests import request
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
@@ -77,6 +78,12 @@ class CreateTitleSerializer(serializers.ModelSerializer):
         )
         model = Title
 
+    def validate_year(self, value):
+        year = dt.date.today().year
+        if value > year:
+            raise serializers.ValidationError('Проверьте год создания!')
+        return value
+
 
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
@@ -84,7 +91,6 @@ class ReviewSerializer(serializers.ModelSerializer):
         default=serializers.CurrentUserDefault(),
         slug_field='username'
     )
-    
 
     class Meta:
         fields = (
@@ -95,15 +101,17 @@ class ReviewSerializer(serializers.ModelSerializer):
             'pub_date'
         )
         model = Review
-        
-        def validate(self, data):
-            if self.context['request'].method == 'POST':
-                return data
-            title_id = self.context['view'].get('title_id')
-            user = self.context['request'].user  
-            if Review.objects.filter(author_id=user.id, title_id=title_id).exists():
-                raise serializers.ValidationError('custom error message')
-            return data
+
+    def validate(self, data):
+        title_id = self.context['request'].parser_context['kwargs']['title_id']
+        author = self.context['request'].user
+        if self.context['request'].method == 'POST':
+            if Review.objects.filter(author=author, title=title_id).exists():
+                raise serializers.ValidationError(
+                    'Вы уже оставили отзыв на данное произведение.'
+                    )
+        return data
+
 
 
 class CommentSerializer(serializers.ModelSerializer):
