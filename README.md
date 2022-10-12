@@ -8,8 +8,7 @@ API для Yatube - это проект, позволяющий собирать
 Python 3.7
 Django 2.2.16
 DRF 3.12.4
-JWT 4.7.2
-Djoser 2.1.0
+JWT 5.2.1
 django-filter 22.1
 
 #### _Запуск проекта в dev-режиме_
