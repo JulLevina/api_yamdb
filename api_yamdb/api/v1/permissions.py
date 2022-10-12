@@ -37,9 +37,12 @@ class IsAuthorOrStaffOrReadOnly(permissions.BasePermission):
 
 
 class AdminOnly(permissions.BasePermission):
+    """Права только для администратора."""
+    message = 'Только для администратора!'
+
     def has_permission(self, request, view):
         return (
-            request.user.role == 'admin'
-            or request.user.is_staff
-            or request.user.is_superuser
+            request.user.is_authenticated
+            and (request.user.role == 'admin'
+                 or request.user.is_superuser)
         )
