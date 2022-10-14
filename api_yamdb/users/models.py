@@ -1,21 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-USER = 'user'
-MODERATOR = 'moderator'
-ADMIN = 'admin'
-ROLES = (
-    (USER, 'Пользователь'),
-    (MODERATOR, 'Модератор'),
-    (ADMIN, 'Администратор'),
-)
-
 
 class User(AbstractUser):
-    username = models.TextField(
-        'Пароль',
-        max_length=155,
-        unique=True
+    """Кастомная модель определяющая пользователей."""
+    USER = 'user'
+    MODERATOR = 'moderator'
+    ADMIN = 'admin'
+    ROLES = (
+        (USER, 'Пользователь'),
+        (MODERATOR, 'Модератор'),
+        (ADMIN, 'Администратор'),
     )
     email = models.EmailField(
         'Электронная почта',
@@ -26,21 +21,25 @@ class User(AbstractUser):
         max_length=300,
         blank=True
     )
-    confirmation_code = models.CharField(
-        'Код активации',
-        max_length=78,
-        default='000000'
-    )
     role = models.CharField(
         'Роль пользователя',
-        max_length=9,
+        max_length=50,
         choices=ROLES,
-        default='user'
-    )
-    is_active = models.BooleanField(
-        'Активирован',
-        default=True
+        default=USER
     )
 
-    def __str__(self):
-        return self.username
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+
+    @property
+    def is_user(self):
+        return self.role == 'user'
+
+    @property
+    def is_moderator(self):
+        return self.role == 'moderator'
+
+    @property
+    def is_admin(self):
+        return self.role == 'admin'

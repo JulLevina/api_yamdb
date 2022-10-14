@@ -1,28 +1,32 @@
-import random
-import string
+import logging
 
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from rest_framework.generics import get_object_or_404
 
-from .models import User
+logger = logging.getLogger(__name__)
 
 
-def generate_activation_code():
+def generate_activation_code(user):
     """Генератор кода для получения Токена."""
-    return ''.join(
-        random.choice(string.ascii_uppercase + string.digits) for x in range(6)
-    )
+    return default_token_generator.make_token(user)
 
 
-def send_mail_in_user(username, confirmation_code):
+def token_verification(user, confirmation_code):
+    """Проверка соответствия кода и пользователя"""
+    return default_token_generator.check_token(user, confirmation_code)
+
+
+def send_mail_in_user(username, email, confirmation_code):
     """Функция отправки письма пользователю."""
-    user = get_object_or_404(User, username=username)
     send_mail(
         'Confirmation_code',
-        f'Добро пожаловать, {user.username}!'
+        f'Добро пожаловать, {username}!'
         f' Ваш код для получения JWT-токена: {confirmation_code}',
-        'api@mail.ru',
-        [f'{user.email}']
+        None,
+        [f'{email}']
     )
-    print(f'Письмо отправленно пользователю {user.username},'
-          f' на почтовый ящик {user.email}')
+    logger.info(
+        f'Письмо с кодом для получения токена,'
+        f' отправлено пользователю {username},'
+        f' на почтовый ящик {email}'
+    )
