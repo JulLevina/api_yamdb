@@ -12,7 +12,6 @@ from .views import (
     UserViewSet
 )
 
-
 v1_router = DefaultRouter()
 
 v1_router.register('titles', TitleViewSet, basename='titles')
@@ -25,9 +24,10 @@ v1_router.register(
     r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments',
     CommentViewSet, basename='comments'
 )
+url_auth = [path('token/', get_jwt_token),
+            path('signup/', send_code)]
 
 urlpatterns = [
-    path('auth/token/', get_jwt_token, name='user_token'),
-    path('auth/signup/', send_code, name='user_sign_up'),
+    path('auth/', include(url_auth)),
     path('', include(v1_router.urls)),
 ]
