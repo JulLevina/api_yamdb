@@ -1,5 +1,5 @@
-from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db.models import Avg
+from django.conf import settings
+from django.core.validators import MaxValueValidator
 from django.db import models
 
 from users.models import User
@@ -18,12 +18,14 @@ class Review(models.Model):
         related_name='reviews',
         verbose_name='Произведение'
     )
-    text = models.TextField()
+    text = models.TextField(verbose_name='Описание произведения')
     score = models.PositiveSmallIntegerField(
         validators=[
-            MaxValueValidator(10)
+            MaxValueValidator(
+                10, 'Максимально высокая оценка %(limit_value)s!'
+            )
         ],
-        error_messages={'max_value': 'Максимально высокая оценка 10!'},
+        error_messages={'invalid': 'Максимально высокая оценка 10!'},
         verbose_name='Оценка'
     )
     pub_date = models.DateTimeField(
@@ -41,7 +43,7 @@ class Review(models.Model):
         ]
 
     def __str__(self) -> str:
-        return self.text
+        return self.text[:settings.SHOW_REVIEW_NUMBER_OF_CHARACTERS]
 
 
 class Title(models.Model):
