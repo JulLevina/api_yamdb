@@ -16,7 +16,8 @@ from users.models import User
 from users.utils import (
     generate_activation_code,
     send_mail_in_user,
-    token_verification,)
+    token_verification,
+)
 from api.v1.serializers import (
     TitleReadSerializer,
     TitleWriteSerializer,
@@ -33,11 +34,15 @@ from api.v1.filters.title_filters import TitleGenreFilter
 
 
 class TitleViewSet(viewsets.ModelViewSet):
+    """
+    Выполняет все операции с произведениями.
+
+    Обрабатывает все запросы для эндпоинта api/v1/titles/
+    """
     permission_classes = (AdminOnly | ReadOnly,)
     queryset = Title.objects.annotate(
         rating=Avg('reviews__score')
     ).select_related('category').order_by('category__name', '-rating')
-    serializer_class = TitleReadSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleGenreFilter
 
@@ -53,6 +58,11 @@ class GenreViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
+    """
+    Выполняет все операции с жанрами.
+
+    Обрабатывает все запросы для эндпоинта api/v1/genres/
+    """
     permission_classes = (AdminOnly | ReadOnly,)
     queryset = Genre.objects.all().order_by('name')
     serializer_class = GenreSerializer
@@ -67,6 +77,11 @@ class CategoryViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
+    """
+    Выполняет все операции с категориями.
+
+    Обрабатывает все запросы для эндпоинта api/v1/categories/
+    """
     permission_classes = (AdminOnly | ReadOnly,)
     queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
@@ -82,7 +97,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
     Обрабатывает запросы 'get', 'post', 'patch', 'delete'
     для эндпоинта api/v1/titles/{title_id}/reviews
     """
-
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrStaffOrReadOnly)
     serializer_class = ReviewSerializer
     http_method_names = ('get', 'post', 'patch', 'delete',)
@@ -105,7 +119,6 @@ class CommentViewSet(viewsets.ModelViewSet):
     Обрабатывает запросы 'get', 'post', 'patch', 'delete' для
     эндпоинта api/v1/titles/{title_id}/reviews/{review_id}/comments
     """
-
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrStaffOrReadOnly)
     serializer_class = CommentSerializer
     http_method_names = ('get', 'post', 'patch', 'delete',)
@@ -185,4 +198,3 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
-

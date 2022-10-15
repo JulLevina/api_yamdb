@@ -4,16 +4,14 @@ from rest_framework import permissions
 class ReadOnly(permissions.BasePermission):
     """Предоставление пользователям права чтения контента."""
 
-    message = (
-        'Вам предоставлено право чтения контента.'
-    )
+    message = 'Вам предоставлено право чтения контента.'
 
     def has_permission(self, request, view):
         return request.method in permissions.SAFE_METHODS
 
 
 class IsAuthorOrStaffOrReadOnly(permissions.BasePermission):
-    """Правом управления контентом наделены: администратор, модератор, автор."""
+    """Права только для администратора, модератора, автора."""
 
     message = (
         'Для создания контента необходимо обладать '

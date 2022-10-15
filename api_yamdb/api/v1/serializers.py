@@ -8,7 +8,10 @@ from users.models import User
 
 
 class CategorySerializer(serializers.ModelSerializer):
-
+    """
+    Возаращает JSON-данные всех полей модели Category
+    для эндпоинта api/v1/categories/
+    """
     class Meta:
         fields = (
             'name',
@@ -18,7 +21,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(serializers.ModelSerializer):
-
+    """
+    Возаращает JSON-данные всех полей модели Genre
+    для эндпоинта api/v1/genres/
+    """
     class Meta:
         fields = (
             'name',
@@ -28,6 +34,13 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
+    """
+    Только для чтения данных.
+
+    Возаращает JSON-данные всех полей модели Title
+    для эндпоинта api/v1/titles/.
+    Добавляет новое поле rating.
+    """
     rating = serializers.IntegerField(read_only=True)
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True)
@@ -46,6 +59,12 @@ class TitleReadSerializer(serializers.ModelSerializer):
 
 
 class TitleWriteSerializer(serializers.ModelSerializer):
+    """
+    Только для записи данных.
+
+    Возаращает JSON-данные всех полей модели Title
+    для эндпоинта api/v1/titles/
+    """
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all()
@@ -78,7 +97,6 @@ class ReviewSerializer(serializers.ModelSerializer):
     Возаращает JSON-данные всех полей модели Reviews
     для эндпоинта api/v1/titles/{title_id}/reviews/
     """
-
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field='username'
