@@ -2,11 +2,10 @@ from rest_framework import permissions
 
 
 class ReadOnly(permissions.BasePermission):
-    """Правом создания контента наделен только администратор."""
+    """Предоставление пользователям права чтения контента."""
 
     message = (
-        'Для создания контента необходимо '
-        'обладать правами администратора.'
+        'Вам предоставлено право чтения контента.'
     )
 
     def has_permission(self, request, view):
@@ -14,11 +13,12 @@ class ReadOnly(permissions.BasePermission):
 
 
 class IsAuthorOrStaffOrReadOnly(permissions.BasePermission):
-    """Правом управления контентом наделен только администратор или автор."""
+    """Правом управления контентом наделены: администратор, модератор, автор."""
 
     message = (
-        'Для создания контента необходимо '
-        'обладать правами администратора или автора.')
+        'Для создания контента необходимо обладать '
+        'правами администратора, модератора или автора.'
+    )
 
     def has_permission(self, request, view):
         return (
@@ -32,12 +32,12 @@ class IsAuthorOrStaffOrReadOnly(permissions.BasePermission):
             or obj.author == request.user
             or request.user.role == 'admin'
             or request.user.role == 'moderator'
-            or request.user.is_superuser
         )
 
 
 class AdminOnly(permissions.BasePermission):
     """Права только для администратора."""
+
     message = 'Только для администратора!'
 
     def has_permission(self, request, view):

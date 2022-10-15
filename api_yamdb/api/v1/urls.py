@@ -12,7 +12,6 @@ from .views import (
     UserViewSet
 )
 
-
 v1_router = DefaultRouter()
 
 v1_router.register('titles', TitleViewSet, basename='titles')

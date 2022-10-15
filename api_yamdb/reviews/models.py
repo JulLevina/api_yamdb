@@ -19,11 +19,11 @@ class Review(models.Model):
         verbose_name='Произведение'
     )
     text = models.TextField()
-    score = models.IntegerField(
+    score = models.PositiveSmallIntegerField(
         validators=[
-            MaxValueValidator(10),
-            MinValueValidator(1)
+            MaxValueValidator(10)
         ],
+        error_messages={'max_value': 'Максимально высокая оценка 10!'},
         verbose_name='Оценка'
     )
     pub_date = models.DateTimeField(
@@ -73,10 +73,6 @@ class Title(models.Model):
 
     def __str__(self) -> str:
         return self.name
-
-    @property
-    def average_rating(self):
-        return self.reviews.aggregate(Avg('score'))['score__avg']
 
 
 class TitleGenre(models.Model):
