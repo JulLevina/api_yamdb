@@ -3,7 +3,6 @@ import datetime as dt
 from django.conf import settings
 from django.db.models import Q
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 from reviews.models import Title, Genre, Category, Review, Comment
 from users.models import User
@@ -187,7 +186,8 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'bio',
-            'role',)
+            'role',
+        )
 
     def validate_role(self, role):
         """Запрещает не админу менять роль."""
