@@ -1,6 +1,7 @@
-from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db.models import Avg
+from django.conf import settings
+from django.core.validators import MaxValueValidator
 from django.db import models
+from django.utils import timezone
 
 from users.models import User
 
@@ -18,11 +19,13 @@ class Review(models.Model):
         related_name='reviews',
         verbose_name='Произведение'
     )
-    text = models.TextField()
-    score = models.IntegerField(
+    text = models.TextField(verbose_name='Текст отзыва')
+    score = models.PositiveSmallIntegerField(
         validators=[
-            MaxValueValidator(10),
-            MinValueValidator(1)
+            MaxValueValidator(
+                10,
+                'Максимально высокая оценка %(limit_value)s!'
+            )
         ],
         verbose_name='Оценка'
     )
@@ -41,13 +44,14 @@ class Review(models.Model):
         ]
 
     def __str__(self) -> str:
-        return self.text
+        return self.text[:settings.SHOW_REVIEW_NUMBER_OF_CHARACTERS]
 
 
 class Title(models.Model):
     name = models.TextField()
-    year = models.IntegerField(
-        verbose_name='Дата публикации'
+    year = models.PositiveSmallIntegerField(
+        validators=[MaxValueValidator(timezone.now().year)],
+        verbose_name='Год создания'
     )
     description = models.TextField(
         verbose_name='Описание'
@@ -56,7 +60,7 @@ class Title(models.Model):
         'Genre',
         through='TitleGenre',
         related_name='genre',
-        verbose_name='Жанр'
+        verbose_name='Жанры'
     )
     category = models.ForeignKey(
         'Category',
@@ -73,10 +77,6 @@ class Title(models.Model):
 
     def __str__(self) -> str:
         return self.name
-
-    @property
-    def average_rating(self):
-        return self.reviews.aggregate(Avg('score'))['score__avg']
 
 
 class TitleGenre(models.Model):
@@ -99,7 +99,6 @@ class Category(models.Model):
         verbose_name='Название категории'
     )
     slug = models.SlugField(
-        max_length=50,
         unique=True,
         verbose_name='slug'
     )
@@ -109,7 +108,7 @@ class Category(models.Model):
         verbose_name_plural = 'Категории'
 
     def __str__(self) -> str:
-        return f'{self.name} {self.name}'
+        return self.name
 
 
 class Genre(models.Model):
@@ -121,14 +120,13 @@ class Genre(models.Model):
         unique=True,
         verbose_name='slug'
     )
-    description = models.TextField(verbose_name='Описание')
 
     class Meta:
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
 
     def __str__(self) -> str:
-        return f'{self.name} {self.name}'
+        return self.name
 
 
 class Comment(models.Model):
@@ -144,7 +142,7 @@ class Comment(models.Model):
         related_name='comments',
         verbose_name='Отзыв'
     )
-    text = models.TextField()
+    text = models.TextField(verbose_name='Текст комментария')
     pub_date = models.DateTimeField(
         auto_now_add=True,
         db_index=True,

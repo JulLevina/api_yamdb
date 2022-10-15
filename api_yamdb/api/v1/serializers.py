@@ -1,14 +1,17 @@
-import datetime as dt
-
+from django.utils import timezone
+from django.conf import settings
+from django.db.models import Q
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 from reviews.models import Title, Genre, Category, Review, Comment
 from users.models import User
 
 
 class CategorySerializer(serializers.ModelSerializer):
-
+    """
+    Возаращает JSON-данные всех полей модели Category
+    для эндпоинта api/v1/categories/
+    """
     class Meta:
         fields = (
             'name',
@@ -18,7 +21,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(serializers.ModelSerializer):
-
+    """
+    Возаращает JSON-данные всех полей модели Genre
+    для эндпоинта api/v1/genres/
+    """
     class Meta:
         fields = (
             'name',
@@ -27,16 +33,17 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
 
 
-class TitleSerializer(serializers.ModelSerializer):
-    rating = serializers.SerializerMethodField()
-    category = CategorySerializer(read_only=True)
-    genre = GenreSerializer(many=True)
+class TitleReadSerializer(serializers.ModelSerializer):
+    """
+    Только для чтения данных.
 
-    def get_rating(self, obj):
-        rating = obj.average_rating
-        if not rating:
-            return rating
-        return round(rating, 1)
+    Возаращает JSON-данные всех полей модели Title
+    для эндпоинта api/v1/titles/.
+    Добавляет новое поле rating.
+    """
+    rating = serializers.IntegerField(read_only=True)
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(read_only=True)
 
     class Meta:
         fields = (
@@ -51,7 +58,13 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
 
 
-class CreateTitleSerializer(serializers.ModelSerializer):
+class TitleWriteSerializer(serializers.ModelSerializer):
+    """
+    Только для записи данных.
+
+    Возаращает JSON-данные всех полей модели Title
+    для эндпоинта api/v1/titles/
+    """
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all()
@@ -74,16 +87,18 @@ class CreateTitleSerializer(serializers.ModelSerializer):
         model = Title
 
     def validate_year(self, value):
-        year = dt.date.today().year
-        if value > year:
+        if value > timezone.now().year:
             raise serializers.ValidationError('Проверьте год создания!')
         return value
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    """
+    Возаращает JSON-данные всех полей модели Reviews
+    для эндпоинта api/v1/titles/{title_id}/reviews/
+    """
     author = serializers.SlugRelatedField(
         read_only=True,
-        default=serializers.CurrentUserDefault(),
         slug_field='username'
     )
 
@@ -98,20 +113,24 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
 
     def validate(self, data):
+        if self.context['request'].method != 'POST':
+            return data
         title_id = self.context['request'].parser_context['kwargs']['title_id']
         author = self.context['request'].user
-        if self.context['request'].method == 'POST':
-            if Review.objects.filter(author=author, title=title_id).exists():
-                raise serializers.ValidationError(
-                    'Вы уже оставили отзыв на данное произведение.'
-                )
+        if Review.objects.filter(author=author, title_id=title_id).exists():
+            raise serializers.ValidationError(
+                'Вы уже оставили отзыв на данное произведение.'
+            )
         return data
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    """
+    Возаращает JSON-данные всех полей модели Comment
+    для эндпоинта api/v1/titles/{title_id}/reviews/{review_id}/commrnts
+    """
     author = serializers.SlugRelatedField(
         read_only=True,
-        default=serializers.CurrentUserDefault(),
         slug_field='username'
     )
 
@@ -126,8 +145,9 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class SendMailSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(required=True)
-    username = serializers.CharField(required=True)
+    """Сериализатор для регистрации пользователя и отправки кода."""
+    email = serializers.EmailField()
+    username = serializers.CharField()
 
     class Meta:
         model = User
@@ -137,24 +157,36 @@ class SendMailSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        if data['username'] == 'me':
-            raise ValidationError(
-                'Пользователя c таким именем нельзя зарегистрировать'
+        """Проверка, соответствия username и email на допустимость."""
+        email = data.get('email')
+        username = data.get('username')
+        duplicate_email = (
+            User.objects.filter(Q(email=email))
+            .filter(~Q(username=username))
+            .exists()
+        )
+        duplicate_username = (
+            User.objects.filter(Q(username=username))
+            .filter(~Q(email=email))
+            .exists()
+        )
+        if duplicate_email:
+            raise serializers.ValidationError(
+                {'detail': 'Такой email адрес уже зарегистрирован.'}
             )
-        if User.objects.filter(
-                username=data['username'],
-                is_active=True
-        ).exists():
-            raise ValidationError('Пользователь c таким именем существует')
-        if User.objects.filter(
-                email=data['email'], is_active=True).exists():
-            raise ValidationError(
-                'Такая электронная почта уже зарегистрирована'
+        if duplicate_username:
+            raise serializers.ValidationError(
+                {'detail': 'Такое имя пользователя уже используется.'}
+            )
+        if username in settings.RESERVED_NAME:
+            raise serializers.ValidationError(
+                {'detail': 'Данное имя использовать запрещено!'}
             )
         return data
 
 
 class ApiTokenSerializer(serializers.Serializer):
+    """Сериализатор для отправки токена зарегистрированному пользователю."""
     username = serializers.CharField(required=True)
     confirmation_code = serializers.CharField(required=True)
 
@@ -163,6 +195,7 @@ class ApiTokenSerializer(serializers.Serializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели класса User."""
     class Meta:
         model = User
         fields = (
@@ -171,4 +204,14 @@ class UserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'bio',
-            'role',)
+            'role',
+        )
+
+    def validate_role(self, role):
+        """Запрещает не админу менять роль."""
+        try:
+            if self.instance.role != 'admin':
+                return self.instance.role
+            return role
+        except AttributeError:
+            return role
