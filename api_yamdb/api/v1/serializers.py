@@ -1,5 +1,4 @@
-import datetime as dt
-
+from django.utils import timezone
 from django.conf import settings
 from django.db.models import Q
 from rest_framework import serializers
@@ -28,16 +27,10 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
 
 
-class TitleSerializer(serializers.ModelSerializer):
-    rating = serializers.SerializerMethodField()
+class TitleReadSerializer(serializers.ModelSerializer):
+    rating = serializers.IntegerField(read_only=True)
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True)
-
-    def get_rating(self, obj):
-        rating = obj.average_rating
-        if not rating:
-            return rating
-        return round(rating, 1)
 
     class Meta:
         fields = (
@@ -52,7 +45,7 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
 
 
-class CreateTitleSerializer(serializers.ModelSerializer):
+class TitleWriteSerializer(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all()
@@ -75,16 +68,19 @@ class CreateTitleSerializer(serializers.ModelSerializer):
         model = Title
 
     def validate_year(self, value):
-        year = dt.date.today().year
-        if value > year:
+        if value > timezone.now().year:
             raise serializers.ValidationError('Проверьте год создания!')
         return value
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    """
+    Возаращает JSON-данные всех полей модели Reviews
+    для эндпоинта api/v1/titles/{title_id}/reviews/
+    """
+
     author = serializers.SlugRelatedField(
         read_only=True,
-        default=serializers.CurrentUserDefault(),
         slug_field='username'
     )
 
@@ -99,20 +95,24 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
 
     def validate(self, data):
+        if self.context['request'].method != 'POST':
+            return data
         title_id = self.context['request'].parser_context['kwargs']['title_id']
         author = self.context['request'].user
-        if self.context['request'].method == 'POST':
-            if Review.objects.filter(author=author, title=title_id).exists():
-                raise serializers.ValidationError(
-                    'Вы уже оставили отзыв на данное произведение.'
-                )
+        if Review.objects.filter(author=author, title_id=title_id).exists():
+            raise serializers.ValidationError(
+                'Вы уже оставили отзыв на данное произведение.'
+            )
         return data
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    """
+    Возаращает JSON-данные всех полей модели Comment
+    для эндпоинта api/v1/titles/{title_id}/reviews/{review_id}/commrnts
+    """
     author = serializers.SlugRelatedField(
         read_only=True,
-        default=serializers.CurrentUserDefault(),
         slug_field='username'
     )
 

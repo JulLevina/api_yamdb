@@ -2,18 +2,22 @@ from rest_framework import permissions
 
 
 class ReadOnly(permissions.BasePermission):
-    """Только для чтения."""
+    """Предоставление пользователям права чтения контента."""
+
+    message = (
+        'Вам предоставлено право чтения контента.'
+    )
 
     def has_permission(self, request, view):
         return request.method in permissions.SAFE_METHODS
 
 
 class IsAuthorOrStaffOrReadOnly(permissions.BasePermission):
-    """Правом управления контентом наделен только администратор или автор."""
+    """Правом управления контентом наделены: администратор, модератор, автор."""
 
     message = (
-        'Для создания контента необходимо '
-        'обладать правами администратора или автора.'
+        'Для создания контента необходимо обладать '
+        'правами администратора, модератора или автора.'
     )
 
     def has_permission(self, request, view):
@@ -33,6 +37,7 @@ class IsAuthorOrStaffOrReadOnly(permissions.BasePermission):
 
 class AdminOnly(permissions.BasePermission):
     """Права только для администратора."""
+
     message = 'Только для администратора!'
 
     def has_permission(self, request, view):

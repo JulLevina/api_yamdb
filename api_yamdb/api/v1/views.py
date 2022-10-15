@@ -1,7 +1,7 @@
 from django.db.models import Avg
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from rest_framework import status, viewsets, filters
+from rest_framework import status, viewsets, filters, mixins
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework.permissions import (
@@ -18,8 +18,8 @@ from users.utils import (
     send_mail_in_user,
     token_verification,)
 from api.v1.serializers import (
-    TitleSerializer,
-    CreateTitleSerializer,
+    TitleReadSerializer,
+    TitleWriteSerializer,
     GenreSerializer,
     CategorySerializer,
     ReviewSerializer,
@@ -29,81 +29,102 @@ from api.v1.serializers import (
     UserSerializer,
 )
 from api.v1.permissions import AdminOnly, IsAuthorOrStaffOrReadOnly, ReadOnly
-from core.filters.title_filters import TitleGenreFilter
+from api.v1.filters.title_filters import TitleGenreFilter
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = (AdminOnly | ReadOnly,)
-    queryset = Title.objects.all()
-    serializer_class = TitleSerializer
+    queryset = Title.objects.annotate(
+        rating=Avg('reviews__score')
+    ).select_related('category').order_by('category__name', '-rating')
+    serializer_class = TitleReadSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleGenreFilter
 
-    def get_queryset(self):
-        return Title.objects.annotate(_average_rating=Avg('reviews__score'))
-
     def get_serializer_class(self):
-        if self.request.method in ('POST', 'PATCH'):
-            return CreateTitleSerializer
-        return TitleSerializer
+        if self.action in ['create', 'partial_update']:
+            return TitleWriteSerializer
+        return TitleReadSerializer
 
 
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
     permission_classes = (AdminOnly | ReadOnly,)
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.all().order_by('name')
     serializer_class = GenreSerializer
+    lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
 
-    @action(detail=False, methods=['delete'],
-            url_path=r'(?P<slug>\w+)', lookup_field='slug')
-    def genre_delete(self, request, slug):
-        genre = self.get_object()
-        genre.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
-
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
     permission_classes = (AdminOnly | ReadOnly,)
-    queryset = Category.objects.all()
+    queryset = Category.objects.all().order_by('name')
     serializer_class = CategorySerializer
+    lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
-
-    @action(detail=False, methods=['delete'],
-            url_path=r'(?P<slug>\w+)', lookup_field='slug')
-    def category_delete(self, request, slug):
-        category = self.get_object()
-        category.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
+    """
+    Выполняет все операции с отзывами.
+
+    Обрабатывает запросы 'get', 'post', 'patch', 'delete'
+    для эндпоинта api/v1/titles/{title_id}/reviews
+    """
+
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrStaffOrReadOnly)
     serializer_class = ReviewSerializer
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ('get', 'post', 'patch', 'delete',)
+
+    def get_title(self):
+        return get_object_or_404(Title, pk=self.kwargs['title_id'])
 
     def get_queryset(self):
-        title = get_object_or_404(Title, pk=self.kwargs['title_id'])
-        return title.reviews.all()
+        return self.get_title().reviews.select_related(
+            'author').order_by('pub_date')
 
     def perform_create(self, serializer):
-        title = get_object_or_404(Title, pk=self.kwargs['title_id'])
-        serializer.save(author=self.request.user, title=title)
+        serializer.save(author=self.request.user, title=self.get_title())
 
 
 class CommentViewSet(viewsets.ModelViewSet):
+    """
+    Выполняет все операции с комментариями.
+
+    Обрабатывает запросы 'get', 'post', 'patch', 'delete' для
+    эндпоинта api/v1/titles/{title_id}/reviews/{review_id}/comments
+    """
+
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrStaffOrReadOnly)
     serializer_class = CommentSerializer
-    http_method_names = ['get', 'post', 'patch', 'delete']
+    http_method_names = ('get', 'post', 'patch', 'delete',)
+
+    def get_title_and_review_id(self):
+        title_id = self.kwargs.get('title_id')
+        review_id = self.kwargs.get('review_id')
+        return get_object_or_404(Review, pk=review_id, title_id=title_id)
 
     def get_queryset(self):
-        review = get_object_or_404(Review, pk=self.kwargs['review_id'])
-        return review.comments.all()
+        return (
+            self.get_title_and_review_id().comments.all().order_by('pub_date')
+        )
 
     def perform_create(self, serializer):
-        review = get_object_or_404(Review, pk=self.kwargs['review_id'])
-        serializer.save(author=self.request.user, review=review)
+        serializer.save(
+            author=self.request.user,
+            review=self.get_title_and_review_id()
+        )
 
 
 @api_view(['POST'])
