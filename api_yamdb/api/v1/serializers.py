@@ -10,7 +10,7 @@ from users.models import User
 class CategorySerializer(serializers.ModelSerializer):
     """
     Возаращает JSON-данные всех полей модели Category
-    для эндпоинта api/v1/categories/
+    для эндпоинта api/v1/categories/.
     """
     class Meta:
         fields = (
@@ -23,7 +23,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class GenreSerializer(serializers.ModelSerializer):
     """
     Возаращает JSON-данные всех полей модели Genre
-    для эндпоинта api/v1/genres/
+    для эндпоинта api/v1/genres/.
     """
     class Meta:
         fields = (
@@ -43,7 +43,7 @@ class TitleReadSerializer(serializers.ModelSerializer):
     """
     rating = serializers.IntegerField(read_only=True)
     category = CategorySerializer(read_only=True)
-    genre = GenreSerializer(read_only=True)
+    genre = GenreSerializer(read_only=True, many=True)
 
     class Meta:
         fields = (
@@ -63,7 +63,7 @@ class TitleWriteSerializer(serializers.ModelSerializer):
     Только для записи данных.
 
     Возаращает JSON-данные всех полей модели Title
-    для эндпоинта api/v1/titles/
+    для эндпоинта api/v1/titles/.
     """
     category = serializers.SlugRelatedField(
         slug_field='slug',
@@ -95,7 +95,7 @@ class TitleWriteSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     """
     Возаращает JSON-данные всех полей модели Reviews
-    для эндпоинта api/v1/titles/{title_id}/reviews/
+    для эндпоинта api/v1/titles/{title_id}/reviews/.
     """
     author = serializers.SlugRelatedField(
         read_only=True,
@@ -127,7 +127,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     """
     Возаращает JSON-данные всех полей модели Comment
-    для эндпоинта api/v1/titles/{title_id}/reviews/{review_id}/commrnts
+    для эндпоинта api/v1/titles/{title_id}/reviews/{review_id}/commrnts.
     """
     author = serializers.SlugRelatedField(
         read_only=True,

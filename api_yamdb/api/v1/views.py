@@ -37,7 +37,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     """
     Выполняет все операции с произведениями.
 
-    Обрабатывает все запросы для эндпоинта api/v1/titles/
+    Обрабатывает все запросы для эндпоинта api/v1/titles/.
     """
     permission_classes = (AdminOnly | ReadOnly,)
     queryset = Title.objects.annotate(
@@ -61,7 +61,7 @@ class GenreViewSet(
     """
     Выполняет все операции с жанрами.
 
-    Обрабатывает все запросы для эндпоинта api/v1/genres/
+    Обрабатывает все запросы для эндпоинта api/v1/genres/.
     """
     permission_classes = (AdminOnly | ReadOnly,)
     queryset = Genre.objects.all().order_by('name')
@@ -71,7 +71,7 @@ class GenreViewSet(
     search_fields = ('name',)
 
 
-class CategoryViewSet(    
+class CategoryViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.DestroyModelMixin,
@@ -80,7 +80,7 @@ class CategoryViewSet(
     """
     Выполняет все операции с категориями.
 
-    Обрабатывает все запросы для эндпоинта api/v1/categories/
+    Обрабатывает все запросы для эндпоинта api/v1/categories/.
     """
     permission_classes = (AdminOnly | ReadOnly,)
     queryset = Category.objects.all().order_by('name')
@@ -95,7 +95,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     Выполняет все операции с отзывами.
 
     Обрабатывает запросы 'get', 'post', 'patch', 'delete'
-    для эндпоинта api/v1/titles/{title_id}/reviews
+    для эндпоинта api/v1/titles/{title_id}/reviews.
     """
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrStaffOrReadOnly)
     serializer_class = ReviewSerializer
@@ -117,7 +117,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     Выполняет все операции с комментариями.
 
     Обрабатывает запросы 'get', 'post', 'patch', 'delete' для
-    эндпоинта api/v1/titles/{title_id}/reviews/{review_id}/comments
+    эндпоинта api/v1/titles/{title_id}/reviews/{review_id}/comments.
     """
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrStaffOrReadOnly)
     serializer_class = CommentSerializer
