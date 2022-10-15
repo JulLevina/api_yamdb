@@ -37,7 +37,6 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.annotate(
         rating=Avg('reviews__score')
     ).select_related('category').order_by('category__name', '-rating')
-    serializer_class = TitleReadSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleGenreFilter
 
@@ -61,7 +60,7 @@ class GenreViewSet(
     search_fields = ('name',)
 
 
-class CategoryViewSet(
+class CategoryViewSet(    
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.DestroyModelMixin,

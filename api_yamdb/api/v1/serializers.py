@@ -8,6 +8,9 @@ from users.models import User
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    """Возаращает JSON-данные всех полей модели  
+    Category для эндпоинта /categories/
+    """
 
     class Meta:
         fields = (
@@ -18,6 +21,9 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(serializers.ModelSerializer):
+    """Возаращает JSON-данные всех полей модели  
+    Genre для эндпоинта /genres/
+    """
 
     class Meta:
         fields = (
@@ -28,9 +34,14 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
+    """Возаращает JSON-данные всех полей модели  
+    Title для эндпоинта /titles/.
+    Добавление нового поля rating.
+    """
+    
     rating = serializers.IntegerField(read_only=True)
     category = CategorySerializer(read_only=True)
-    genre = GenreSerializer(many=True)
+    genre = GenreSerializer(read_only=True)
 
     class Meta:
         fields = (
