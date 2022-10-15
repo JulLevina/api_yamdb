@@ -71,7 +71,7 @@ class GenreViewSet(
     search_fields = ('name',)
 
 
-class CategoryViewSet(
+class CategoryViewSet(    
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.DestroyModelMixin,

@@ -60,7 +60,7 @@ class Title(models.Model):
         'Genre',
         through='TitleGenre',
         related_name='genre',
-        verbose_name='Жанр'
+        verbose_name='Жанры'
     )
     category = models.ForeignKey(
         'Category',
@@ -99,7 +99,6 @@ class Category(models.Model):
         verbose_name='Название категории'
     )
     slug = models.SlugField(
-        max_length=50,
         unique=True,
         verbose_name='slug'
     )
