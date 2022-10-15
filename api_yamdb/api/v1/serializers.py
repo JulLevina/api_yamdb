@@ -1,4 +1,4 @@
-import datetime as dt
+from django.utils import timezone
 
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -8,6 +8,9 @@ from users.models import User
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    """Возаращает JSON-данные всех полей модели  
+    Category для эндпоинта /categories/
+    """
 
     class Meta:
         fields = (
@@ -18,6 +21,9 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(serializers.ModelSerializer):
+    """Возаращает JSON-данные всех полей модели  
+    Genre для эндпоинта /genres/
+    """
 
     class Meta:
         fields = (
@@ -27,10 +33,15 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
 
 
-class TitleSerializer(serializers.ModelSerializer):
-    rating = serializers.SerializerMethodField()
+class TitleReadSerializer(serializers.ModelSerializer):
+    """Возаращает JSON-данные всех полей модели  
+    Title для эндпоинта /titles/.
+    Добавление нового поля rating.
+    """
+
+    rating = serializers.SerializerMethodField(read_only=True)
     category = CategorySerializer(read_only=True)
-    genre = GenreSerializer(many=True)
+    genre = GenreSerializer(read_only=True)
 
     def get_rating(self, obj):
         rating = obj.average_rating
@@ -51,7 +62,7 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
 
 
-class CreateTitleSerializer(serializers.ModelSerializer):
+class TitleWriteSerializer(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all()
@@ -74,8 +85,7 @@ class CreateTitleSerializer(serializers.ModelSerializer):
         model = Title
 
     def validate_year(self, value):
-        year = dt.date.today().year
-        if value > year:
+        if value > timezone.now().year:
             raise serializers.ValidationError('Проверьте год создания!')
         return value
 

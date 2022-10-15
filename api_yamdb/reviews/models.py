@@ -1,6 +1,7 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import Avg
 from django.db import models
+from django.utils import timezone
 
 from users.models import User
 
@@ -46,8 +47,10 @@ class Review(models.Model):
 
 class Title(models.Model):
     name = models.TextField()
-    year = models.IntegerField(
-        verbose_name='Дата публикации'
+    year = models.PositiveSmallIntegerField(
+        validators=[MaxValueValidator(timezone.now().year)
+        ],
+        verbose_name='Год создания'
     )
     description = models.TextField(
         verbose_name='Описание'
@@ -56,7 +59,7 @@ class Title(models.Model):
         'Genre',
         through='TitleGenre',
         related_name='genre',
-        verbose_name='Жанр'
+        verbose_name='Жанры'
     )
     category = models.ForeignKey(
         'Category',
@@ -99,7 +102,6 @@ class Category(models.Model):
         verbose_name='Название категории'
     )
     slug = models.SlugField(
-        max_length=50,
         unique=True,
         verbose_name='slug'
     )
@@ -109,7 +111,7 @@ class Category(models.Model):
         verbose_name_plural = 'Категории'
 
     def __str__(self) -> str:
-        return f'{self.name} {self.name}'
+        return self.name
 
 
 class Genre(models.Model):
@@ -121,14 +123,13 @@ class Genre(models.Model):
         unique=True,
         verbose_name='slug'
     )
-    description = models.TextField(verbose_name='Описание')
 
     class Meta:
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
 
     def __str__(self) -> str:
-        return f'{self.name} {self.name}'
+        return self.name
 
 
 class Comment(models.Model):
