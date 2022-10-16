@@ -42,7 +42,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = (AdminOnly | ReadOnly,)
     queryset = Title.objects.annotate(
         rating=Avg('reviews__score')
-    ).select_related('category').order_by('category__name', '-rating')
+    ).select_related('category').order_by('category__name', 'genre__name', '-rating')
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleGenreFilter
 
@@ -63,7 +63,7 @@ class GenreViewSet(
     """
 
     permission_classes = (AdminOnly | ReadOnly,)
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.order_by('name')
     serializer_class = GenreSerializer
     lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
@@ -81,7 +81,7 @@ class CategoryViewSet(
     """
 
     permission_classes = (AdminOnly | ReadOnly,)
-    queryset = Category.objects.all()
+    queryset = Category.objects.order_by('name')
     serializer_class = CategorySerializer
     lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
