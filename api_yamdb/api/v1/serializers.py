@@ -1,6 +1,4 @@
-from django.utils import timezone
 from django.conf import settings
-from django.db.models import Q
 from rest_framework import serializers
 
 from reviews.models import Title, Genre, Category, Review, Comment
@@ -9,9 +7,10 @@ from users.models import User
 
 class CategorySerializer(serializers.ModelSerializer):
     """
-    Возаращает JSON-данные всех полей модели Category
+    Возвращает JSON-данные всех полей модели Category
     для эндпоинта api/v1/categories/.
     """
+
     class Meta:
         fields = (
             'name',
@@ -22,9 +21,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class GenreSerializer(serializers.ModelSerializer):
     """
-    Возаращает JSON-данные всех полей модели Genre
+    Возвращает JSON-данные всех полей модели Genre
     для эндпоинта api/v1/genres/.
     """
+
     class Meta:
         fields = (
             'name',
@@ -34,13 +34,12 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
-    """
-    Только для чтения данных.
-
-    Возаращает JSON-данные всех полей модели Title
+    """Только для чтения данных.
+    Возвращает JSON-данные всех полей модели Title
     для эндпоинта api/v1/titles/.
     Добавляет новое поле rating.
     """
+
     rating = serializers.IntegerField(read_only=True)
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
@@ -59,12 +58,11 @@ class TitleReadSerializer(serializers.ModelSerializer):
 
 
 class TitleWriteSerializer(serializers.ModelSerializer):
-    """
-    Только для записи данных.
-
-    Возаращает JSON-данные всех полей модели Title
+    """Только для записи данных.
+    Возвращает JSON-данные всех полей модели Title
     для эндпоинта api/v1/titles/.
     """
+
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all()
@@ -86,17 +84,13 @@ class TitleWriteSerializer(serializers.ModelSerializer):
         )
         model = Title
 
-    def validate_year(self, value):
-        if value > timezone.now().year:
-            raise serializers.ValidationError('Проверьте год создания!')
-        return value
-
 
 class ReviewSerializer(serializers.ModelSerializer):
     """
-    Возаращает JSON-данные всех полей модели Reviews
+    Возвращает JSON-данные всех полей модели Reviews
     для эндпоинта api/v1/titles/{title_id}/reviews/.
     """
+
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field='username'
@@ -113,6 +107,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
 
     def validate(self, data):
+        """Проверка невозможности дважды оставить отзыв на произведение."""
         if self.context['request'].method != 'POST':
             return data
         title_id = self.context['request'].parser_context['kwargs']['title_id']
@@ -129,6 +124,7 @@ class CommentSerializer(serializers.ModelSerializer):
     Возаращает JSON-данные всех полей модели Comment
     для эндпоинта api/v1/titles/{title_id}/reviews/{review_id}/commrnts.
     """
+
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field='username'
@@ -146,6 +142,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class SendMailSerializer(serializers.ModelSerializer):
     """Сериализатор для регистрации пользователя и отправки кода."""
+
     email = serializers.EmailField()
     username = serializers.CharField()
 
@@ -157,28 +154,9 @@ class SendMailSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        """Проверка, соответствия username и email на допустимость."""
-        email = data.get('email')
-        username = data.get('username')
-        duplicate_email = (
-            User.objects.filter(Q(email=email))
-            .filter(~Q(username=username))
-            .exists()
-        )
-        duplicate_username = (
-            User.objects.filter(Q(username=username))
-            .filter(~Q(email=email))
-            .exists()
-        )
-        if duplicate_email:
-            raise serializers.ValidationError(
-                {'detail': 'Такой email адрес уже зарегистрирован.'}
-            )
-        if duplicate_username:
-            raise serializers.ValidationError(
-                {'detail': 'Такое имя пользователя уже используется.'}
-            )
-        if username in settings.RESERVED_NAME:
+        """Проверка, соответствия username на допустимость."""
+        username = data['username']
+        if username.lower() == settings.RESERVED_NAME:
             raise serializers.ValidationError(
                 {'detail': 'Данное имя использовать запрещено!'}
             )
@@ -187,8 +165,9 @@ class SendMailSerializer(serializers.ModelSerializer):
 
 class ApiTokenSerializer(serializers.Serializer):
     """Сериализатор для отправки токена зарегистрированному пользователю."""
-    username = serializers.CharField(required=True)
-    confirmation_code = serializers.CharField(required=True)
+
+    username = serializers.CharField()
+    confirmation_code = serializers.CharField()
 
     class Meta:
         fields = ('username', 'email')
@@ -196,6 +175,7 @@ class ApiTokenSerializer(serializers.Serializer):
 
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор для модели класса User."""
+
     class Meta:
         model = User
         fields = (
@@ -206,12 +186,3 @@ class UserSerializer(serializers.ModelSerializer):
             'bio',
             'role',
         )
-
-    def validate_role(self, role):
-        """Запрещает не админу менять роль."""
-        try:
-            if self.instance.role != 'admin':
-                return self.instance.role
-            return role
-        except AttributeError:
-            return role

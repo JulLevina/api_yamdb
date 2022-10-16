@@ -1,14 +1,15 @@
+from django.db import IntegrityError
 from django.db.models import Avg
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets, filters, mixins
 from rest_framework.decorators import api_view, permission_classes, action
-from rest_framework.response import Response
 from rest_framework.permissions import (
     AllowAny,
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
 )
+from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from reviews.models import Title, Genre, Category, Review
@@ -30,15 +31,14 @@ from api.v1.serializers import (
     UserSerializer,
 )
 from api.v1.permissions import AdminOnly, IsAuthorOrStaffOrReadOnly, ReadOnly
-from api.v1.filters.title_filters import TitleGenreFilter
+from api.v1.filters import TitleGenreFilter
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    """
-    Выполняет все операции с произведениями.
-
+    """Выполняет все операции с произведениями.
     Обрабатывает все запросы для эндпоинта api/v1/titles/.
     """
+
     permission_classes = (AdminOnly | ReadOnly,)
     queryset = Title.objects.annotate(
         rating=Avg('reviews__score')
@@ -47,7 +47,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     filterset_class = TitleGenreFilter
 
     def get_serializer_class(self):
-        if self.action in ['create', 'partial_update']:
+        if self.action in {'create', 'partial_update'}:
             return TitleWriteSerializer
         return TitleReadSerializer
 
@@ -58,13 +58,12 @@ class GenreViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    """
-    Выполняет все операции с жанрами.
-
+    """Выполняет все операции с жанрами.
     Обрабатывает все запросы для эндпоинта api/v1/genres/.
     """
+
     permission_classes = (AdminOnly | ReadOnly,)
-    queryset = Genre.objects.all().order_by('name')
+    queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
@@ -77,13 +76,12 @@ class CategoryViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    """
-    Выполняет все операции с категориями.
-
+    """ Позволяет получить список, создать или удалить категорию.
     Обрабатывает все запросы для эндпоинта api/v1/categories/.
     """
+
     permission_classes = (AdminOnly | ReadOnly,)
-    queryset = Category.objects.all().order_by('name')
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
@@ -93,10 +91,10 @@ class CategoryViewSet(
 class ReviewViewSet(viewsets.ModelViewSet):
     """
     Выполняет все операции с отзывами.
-
     Обрабатывает запросы 'get', 'post', 'patch', 'delete'
     для эндпоинта api/v1/titles/{title_id}/reviews.
     """
+
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrStaffOrReadOnly)
     serializer_class = ReviewSerializer
     http_method_names = ('get', 'post', 'patch', 'delete',)
@@ -113,58 +111,64 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    """
-    Выполняет все операции с комментариями.
-
+    """Выполняет все операции с комментариями.
     Обрабатывает запросы 'get', 'post', 'patch', 'delete' для
     эндпоинта api/v1/titles/{title_id}/reviews/{review_id}/comments.
     """
+
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrStaffOrReadOnly)
     serializer_class = CommentSerializer
     http_method_names = ('get', 'post', 'patch', 'delete',)
 
-    def get_title_and_review_id(self):
+    def get_review(self):
         title_id = self.kwargs.get('title_id')
         review_id = self.kwargs.get('review_id')
         return get_object_or_404(Review, pk=review_id, title_id=title_id)
 
     def get_queryset(self):
-        return (
-            self.get_title_and_review_id().comments.all().order_by('pub_date')
-        )
+        return self.get_review().comments.all()
 
     def perform_create(self, serializer):
         serializer.save(
             author=self.request.user,
-            review=self.get_title_and_review_id()
+            review=self.get_review()
         )
 
 
-@api_view(['POST'])
+@api_view(('POST',))
 @permission_classes([AllowAny])
-def send_code(request):
+def send_code(request,):
     """Функция регистрации пользователя и отправки кода подтверждения."""
     serializer = SendMailSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    email = serializer.validated_data.get('email')
-    username = serializer.validated_data.get('username')
-    user, created = User.objects.get_or_create(
-        email=email, username=username
-    )
+    email = serializer.validated_data['email']
+    username = serializer.validated_data['username']
+    try:
+        user, created = User.objects.get_or_create(
+            email=email, username=username
+        )
+    except IntegrityError:
+        return Response(
+            {'username': 'Пользователь с таким именем или почтой уже есть'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
     confirmation_code = generate_activation_code(user)
-    user.save()
-    send_mail_in_user(username, email, confirmation_code)
+    send_mail_in_user(
+        username=username,
+        email=email,
+        confirmation_code=confirmation_code
+    )
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
+@api_view(('POST',))
 @permission_classes([AllowAny])
-def get_jwt_token(request):
+def get_jwt_token(request,):
     """Функция проверки кода подтверждения и выдачи токена."""
     serializer = ApiTokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    username = serializer.validated_data.get('username')
-    confirmation_code = serializer.validated_data.get('confirmation_code')
+    username = serializer.validated_data['username']
+    confirmation_code = serializer.validated_data['confirmation_code']
     user = get_object_or_404(User, username=username)
     if token_verification(user, confirmation_code):
         token = AccessToken.for_user(user)
@@ -175,7 +179,8 @@ def get_jwt_token(request):
 
 class UserViewSet(viewsets.ModelViewSet):
     """Класс предоставления информации о пользователях."""
-    queryset = User.objects.all()
+
+    queryset = User.objects.order_by('username')
     serializer_class = UserSerializer
     permission_classes = (AdminOnly,)
     search_fields = ('^username',)
@@ -185,7 +190,8 @@ class UserViewSet(viewsets.ModelViewSet):
         methods=['GET', 'PATCH'],
         detail=False,
         permission_classes=(IsAuthenticated,),
-        url_path='me')
+        url_path='me'
+    )
     def get_current_user_info(self, request):
         serializer = UserSerializer(request.user)
         if request.method == 'GET':
@@ -194,7 +200,8 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = UserSerializer(
             request.user,
             data=request.data,
-            partial=True)
+            partial=True
+        )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(role=request.user.role)
         return Response(serializer.data, status=status.HTTP_200_OK)

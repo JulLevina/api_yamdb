@@ -1,16 +1,25 @@
 from django.conf import settings
-from django.core.validators import MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
 from users.models import User
 
 
+def validate_year(value):
+    """Проверка невозможности указать год больше текущего."""
+    if value > timezone.now().year:
+        raise ValidationError('Проверьте год создания!')
+    return value
+
+
 class Review(models.Model):
+    """Модель, определяющая состав полей отзывов на произведение."""
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='reviews',
         verbose_name='Автор'
     )
     title = models.ForeignKey(
@@ -22,6 +31,10 @@ class Review(models.Model):
     text = models.TextField(verbose_name='Текст отзыва')
     score = models.PositiveSmallIntegerField(
         validators=[
+            MinValueValidator(
+                1,
+                'Максимально низкая оценка %(limit_value)s!'
+            ),
             MaxValueValidator(
                 10,
                 'Максимально высокая оценка %(limit_value)s!'
@@ -48,9 +61,11 @@ class Review(models.Model):
 
 
 class Title(models.Model):
-    name = models.TextField()
+    """Модель, определяющая состав полей произведения."""
+
+    name = models.TextField(verbose_name='Название произведения')
     year = models.PositiveSmallIntegerField(
-        validators=[MaxValueValidator(timezone.now().year)],
+        validators=[validate_year],
         verbose_name='Год создания'
     )
     description = models.TextField(
@@ -80,13 +95,17 @@ class Title(models.Model):
 
 
 class TitleGenre(models.Model):
+    """Модель, необходимая для связи жанра и произведения."""
+
     genre = models.ForeignKey(
         'Genre',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Жанр'
     )
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
+        verbose_name='Произведение'
     )
 
     def __str__(self):
@@ -94,6 +113,8 @@ class TitleGenre(models.Model):
 
 
 class Category(models.Model):
+    """Модель, определяющая состав полей категории произведения."""
+
     name = models.CharField(
         max_length=256,
         verbose_name='Название категории'
@@ -112,6 +133,8 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
+    """Модель, определяющая состав полей жанра произведения."""
+
     name = models.CharField(
         max_length=200,
         verbose_name='Название жанра'
@@ -130,6 +153,8 @@ class Genre(models.Model):
 
 
 class Comment(models.Model):
+    """"Модель, определяющая состав полей комментариев к отзывам."""
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -154,4 +179,4 @@ class Comment(models.Model):
         verbose_name_plural = 'Коментарии'
 
     def __str__(self) -> str:
-        return self.text
+        return self.text[:settings.SHOW_COMMENT_NUMBER_OF_CHARACTERS]

@@ -9,12 +9,7 @@ EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
 
 DEFAULT_FROM_EMAIL = 'yamdb@ya.ru'
 
-RESERVED_NAME = (
-    'me',
-    'Me',
-    'mE',
-    'ME',
-)
+RESERVED_NAME = 'me'
 
 SECRET_KEY = 'p&l%385148kslhtyn^##a1)ilz@4zqj=rq&agdol^##zgl9(vs'
 
@@ -49,6 +44,8 @@ MIDDLEWARE = [
 ]
 
 SHOW_REVIEW_NUMBER_OF_CHARACTERS = 15
+
+SHOW_COMMENT_NUMBER_OF_CHARACTERS = 15
 
 ROOT_URLCONF = 'api_yamdb.urls'
 
