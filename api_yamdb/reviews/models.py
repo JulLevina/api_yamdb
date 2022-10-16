@@ -53,6 +53,8 @@ class Review(models.Model):
 
 
 class Title(models.Model):
+    """Модель, определяющая состав полей произведения."""
+
     name = models.TextField()
     year = models.PositiveSmallIntegerField(
         validators=[MaxValueValidator(validators=[validate_year])],
@@ -85,6 +87,8 @@ class Title(models.Model):
 
 
 class TitleGenre(models.Model):
+    """Модель, необходимая для связи жанра и произведения."""
+
     genre = models.ForeignKey(
         'Genre',
         on_delete=models.CASCADE
@@ -99,6 +103,8 @@ class TitleGenre(models.Model):
 
 
 class Category(models.Model):
+    """Модель, определяющая состав полей категории произведения."""
+
     name = models.CharField(
         max_length=256,
         verbose_name='Название категории'
@@ -117,6 +123,8 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
+    """Модель, определяющая состав полей жанра произведения."""
+
     name = models.CharField(
         max_length=200,
         verbose_name='Название жанра'
