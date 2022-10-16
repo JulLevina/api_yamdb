@@ -21,16 +21,20 @@ def token_verification(user, confirmation_code):
 def send_mail_in_user(**kwargs):
     """Функция отправки письма пользователю."""
 
+    username = kwargs['username']
+    email = kwargs['email']
+    confirmation_code = kwargs["confirmation_code"]
     message = (
         f'Письмо с кодом для получения токена,'
-        f' отправлено пользователю {kwargs["username"]},'
-        f' на почтовый ящик {kwargs["email"]}'
+        f' отправлено пользователю {username},'
+        f' на почтовый ящик {email}'
     )
-    send_mail(
-        'Confirmation_code',
-        f'Добро пожаловать, {kwargs["username"]}!'
-        f' Ваш код для получения JWT-токена: {kwargs["confirmation_code"]}',
-        None,
-        [f'{kwargs["email"]}']
+    subject = 'Confirmation_code'
+    message_mail = (
+        f'Добро пожаловать, {username}!'
+        f' Ваш код для получения JWT-токена: {confirmation_code}'
     )
+    from_email = None
+    recipient_list = (email,)
+    send_mail(subject, message_mail, from_email, recipient_list)
     logger.info(message)

@@ -136,7 +136,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 @api_view(('POST',))
-@permission_classes([AllowAny])
+@permission_classes((AllowAny,))
 def send_code(request,):
     """Функция регистрации пользователя и отправки кода подтверждения."""
     serializer = SendMailSerializer(data=request.data)
@@ -162,7 +162,7 @@ def send_code(request,):
 
 
 @api_view(('POST',))
-@permission_classes([AllowAny])
+@permission_classes((AllowAny,))
 def get_jwt_token(request,):
     """Функция проверки кода подтверждения и выдачи токена."""
     serializer = ApiTokenSerializer(data=request.data)
@@ -193,8 +193,8 @@ class UserViewSet(viewsets.ModelViewSet):
         url_path='me'
     )
     def get_current_user_info(self, request):
-        serializer = UserSerializer(request.user)
         if request.method == 'GET':
+            serializer = UserSerializer(request.user)
             return Response(serializer.data)
 
         serializer = UserSerializer(

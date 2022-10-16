@@ -143,9 +143,6 @@ class CommentSerializer(serializers.ModelSerializer):
 class SendMailSerializer(serializers.ModelSerializer):
     """Сериализатор для регистрации пользователя и отправки кода."""
 
-    email = serializers.EmailField()
-    username = serializers.CharField()
-
     class Meta:
         model = User
         fields = (
@@ -166,8 +163,12 @@ class SendMailSerializer(serializers.ModelSerializer):
 class ApiTokenSerializer(serializers.Serializer):
     """Сериализатор для отправки токена зарегистрированному пользователю."""
 
-    username = serializers.CharField()
-    confirmation_code = serializers.CharField()
+    username = serializers.RegexField(
+        max_length=150,
+        required=True,
+        regex=r"^[\w.@+-]+\Z"
+    )
+    confirmation_code = serializers.CharField(required=True)
 
     class Meta:
         fields = ('username', 'email')
