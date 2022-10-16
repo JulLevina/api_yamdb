@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.db.models import Avg
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
@@ -140,31 +141,42 @@ class CommentViewSet(viewsets.ModelViewSet):
         )
 
 
-@api_view(['POST'])
+@api_view(('POST',))
 @permission_classes([AllowAny])
-def send_code(request):
+def send_code(request,):
     """Функция регистрации пользователя и отправки кода подтверждения."""
+
     serializer = SendMailSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    email = serializer.validated_data.get('email')
-    username = serializer.validated_data.get('username')
-    user, created = User.objects.get_or_create(
-        email=email, username=username
-    )
+    email = serializer.validated_data['email']
+    username = serializer.validated_data['username']
+    try:
+        user, created = User.objects.get_or_create(
+            email=email, username=username
+        )
+    except IntegrityError:
+        return Response(
+            {'username': 'Пользователь с таким именем или почтой уже есть'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
     confirmation_code = generate_activation_code(user)
-    user.save()
-    send_mail_in_user(username, email, confirmation_code)
+    send_mail_in_user(
+        username=username,
+        email=email,
+        confirmation_code=confirmation_code
+    )
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
+@api_view(('POST',))
 @permission_classes([AllowAny])
-def get_jwt_token(request):
+def get_jwt_token(request,):
     """Функция проверки кода подтверждения и выдачи токена."""
+
     serializer = ApiTokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    username = serializer.validated_data.get('username')
-    confirmation_code = serializer.validated_data.get('confirmation_code')
+    username = serializer.validated_data['username']
+    confirmation_code = serializer.validated_data['confirmation_code']
     user = get_object_or_404(User, username=username)
     if token_verification(user, confirmation_code):
         token = AccessToken.for_user(user)
@@ -175,7 +187,8 @@ def get_jwt_token(request):
 
 class UserViewSet(viewsets.ModelViewSet):
     """Класс предоставления информации о пользователях."""
-    queryset = User.objects.all()
+
+    queryset = User.objects.order_by('username')
     serializer_class = UserSerializer
     permission_classes = (AdminOnly,)
     search_fields = ('^username',)
@@ -185,7 +198,8 @@ class UserViewSet(viewsets.ModelViewSet):
         methods=['GET', 'PATCH'],
         detail=False,
         permission_classes=(IsAuthenticated,),
-        url_path='me')
+        url_path='me'
+    )
     def get_current_user_info(self, request):
         serializer = UserSerializer(request.user)
         if request.method == 'GET':
@@ -194,7 +208,8 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = UserSerializer(
             request.user,
             data=request.data,
-            partial=True)
+            partial=True
+        )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(role=request.user.role)
         return Response(serializer.data, status=status.HTTP_200_OK)
