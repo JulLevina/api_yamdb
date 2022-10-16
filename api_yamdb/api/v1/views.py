@@ -31,7 +31,7 @@ from api.v1.serializers import (
     UserSerializer,
 )
 from api.v1.permissions import AdminOnly, IsAuthorOrStaffOrReadOnly, ReadOnly
-from api.v1.filters import TitleGenreFilter
+from api.v1.filters import TitleFilter
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -44,7 +44,7 @@ class TitleViewSet(viewsets.ModelViewSet):
         rating=Avg('reviews__score')
     ).select_related('category').order_by('category__name', '-rating')
     filter_backends = (DjangoFilterBackend,)
-    filterset_class = TitleGenreFilter
+    filterset_class = TitleFilter
 
     def get_serializer_class(self):
         if self.action in {'create', 'partial_update'}:
@@ -63,7 +63,7 @@ class GenreViewSet(
     """
 
     permission_classes = (AdminOnly | ReadOnly,)
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.order_by('name')
     serializer_class = GenreSerializer
     lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
@@ -81,7 +81,7 @@ class CategoryViewSet(
     """
 
     permission_classes = (AdminOnly | ReadOnly,)
-    queryset = Category.objects.all()
+    queryset = Category.objects.order_by('name')
     serializer_class = CategorySerializer
     lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
@@ -121,12 +121,12 @@ class CommentViewSet(viewsets.ModelViewSet):
     http_method_names = ('get', 'post', 'patch', 'delete',)
 
     def get_review(self):
-        title_id = self.kwargs.get('title_id')
-        review_id = self.kwargs.get('review_id')
+        title_id = self.kwargs['title_id']
+        review_id = self.kwargs['review_id']
         return get_object_or_404(Review, pk=review_id, title_id=title_id)
 
     def get_queryset(self):
-        return self.get_review().comments.all()
+        return self.get_review().comments.order_by('pub_date')
 
     def perform_create(self, serializer):
         serializer.save(
@@ -136,7 +136,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 @api_view(('POST',))
-@permission_classes([AllowAny])
+@permission_classes((AllowAny,))
 def send_code(request,):
     """Функция регистрации пользователя и отправки кода подтверждения."""
     serializer = SendMailSerializer(data=request.data)
@@ -162,7 +162,7 @@ def send_code(request,):
 
 
 @api_view(('POST',))
-@permission_classes([AllowAny])
+@permission_classes((AllowAny,))
 def get_jwt_token(request,):
     """Функция проверки кода подтверждения и выдачи токена."""
     serializer = ApiTokenSerializer(data=request.data)
@@ -193,8 +193,8 @@ class UserViewSet(viewsets.ModelViewSet):
         url_path='me'
     )
     def get_current_user_info(self, request):
-        serializer = UserSerializer(request.user)
         if request.method == 'GET':
+            serializer = UserSerializer(request.user)
             return Response(serializer.data)
 
         serializer = UserSerializer(

@@ -8,8 +8,6 @@ from django.conf import settings
 from reviews.models import Title, Genre, Category, Review, Comment, TitleGenre
 from users.models import User
 
-call_command('migrate')
-
 DATA_LIST = {
     Category: 'category.csv',
     Genre: 'genre.csv',
@@ -25,6 +23,7 @@ class Command(BaseCommand):
     """Загружает csv-данные в базу данных."""
 
     def handle(self, *args, **kwargs):
+        call_command('migrate')
         for model, csv_data in DATA_LIST.items():
             with open(os.path.join(settings.BASE_DIR,
                       f'static/data/{csv_data}'),
