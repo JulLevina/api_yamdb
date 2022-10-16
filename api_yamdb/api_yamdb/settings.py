@@ -9,12 +9,7 @@ EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
 
 DEFAULT_FROM_EMAIL = 'yamdb@ya.ru'
 
-RESERVED_NAME = (
-    'me',
-    'Me',
-    'mE',
-    'ME',
-)
+RESERVED_NAME = 'me'
 
 SECRET_KEY = 'p&l%385148kslhtyn^##a1)ilz@4zqj=rq&agdol^##zgl9(vs'
 
@@ -128,35 +123,4 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'AUTH_HEADER_TYPES': ('Bearer',),
-}
-
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': True,
-    'formatters': {
-        'formatter': {
-            '()': 'django.utils.log.ServerFormatter',
-            'format': '[%(name)s %(asctime)s %(filename)s: %(lineno)d - %(funcName)s()] %(message)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
-        }
-    },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'formatter',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ('console',),
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'django.db.backends': {
-            'handlers': ('console',),
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-    },
 }

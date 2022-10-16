@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 
 class User(AbstractUser):
     """Кастомная модель определяющая пользователей."""
+
     USER = 'user'
     MODERATOR = 'moderator'
     ADMIN = 'admin'
@@ -33,12 +34,8 @@ class User(AbstractUser):
         verbose_name_plural = 'Пользователи'
 
     @property
-    def is_user(self):
-        return self.role == 'user'
-
-    @property
     def is_moderator(self):
-        return self.role == 'moderator'
+        return self.role == self.MODERATOR
 
     @property
     def is_admin(self):

@@ -1,10 +1,15 @@
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
 from users.models import User
 
+def validate_year(self, value):
+    if value > timezone.now().year:
+        raise ValidationError('Проверьте год создания!')
+    return value
 
 class Review(models.Model):
     """Модель, определяющая состав полей отзывов на произведение."""
@@ -54,9 +59,11 @@ class Review(models.Model):
 
 
 class Title(models.Model):
+    """Модель, определяющая состав полей произведения."""
+
     name = models.TextField()
     year = models.PositiveSmallIntegerField(
-        validators=[MaxValueValidator(timezone.now().year)],
+        validators=[MaxValueValidator(validators=[validate_year])],
         verbose_name='Год создания'
     )
     description = models.TextField(
@@ -86,6 +93,8 @@ class Title(models.Model):
 
 
 class TitleGenre(models.Model):
+    """Модель, необходимая для связи жанра и произведения."""
+
     genre = models.ForeignKey(
         'Genre',
         on_delete=models.CASCADE
@@ -100,6 +109,8 @@ class TitleGenre(models.Model):
 
 
 class Category(models.Model):
+    """Модель, определяющая состав полей категории произведения."""
+
     name = models.CharField(
         max_length=256,
         verbose_name='Название категории'
@@ -118,6 +129,8 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
+    """Модель, определяющая состав полей жанра произведения."""
+
     name = models.CharField(
         max_length=200,
         verbose_name='Название жанра'
