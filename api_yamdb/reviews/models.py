@@ -1,10 +1,15 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.db import models
 from django.utils import timezone
 
 from users.models import User
 
+def validate_year(self, value):
+    if value > timezone.now().year:
+        raise ValidationError('Проверьте год создания!')
+    return value
 
 class Review(models.Model):
     author = models.ForeignKey(
@@ -50,7 +55,7 @@ class Review(models.Model):
 class Title(models.Model):
     name = models.TextField()
     year = models.PositiveSmallIntegerField(
-        validators=[MaxValueValidator(timezone.now().year)],
+        validators=[MaxValueValidator(validators=[validate_year])],
         verbose_name='Год создания'
     )
     description = models.TextField(

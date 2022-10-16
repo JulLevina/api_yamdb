@@ -8,10 +8,10 @@ from users.models import User
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    """
-    Возаращает JSON-данные всех полей модели Category
+    """Возаращает JSON-данные всех полей модели Category
     для эндпоинта api/v1/categories/.
     """
+
     class Meta:
         fields = (
             'name',
@@ -21,10 +21,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class GenreSerializer(serializers.ModelSerializer):
-    """
-    Возаращает JSON-данные всех полей модели Genre
+    """ Возаращает JSON-данные всех полей модели Genre
     для эндпоинта api/v1/genres/.
     """
+
     class Meta:
         fields = (
             'name',
@@ -34,13 +34,12 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleReadSerializer(serializers.ModelSerializer):
-    """
-    Только для чтения данных.
-
+    """Только для чтения данных.
     Возаращает JSON-данные всех полей модели Title
     для эндпоинта api/v1/titles/.
     Добавляет новое поле rating.
     """
+
     rating = serializers.IntegerField(read_only=True)
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
@@ -59,12 +58,11 @@ class TitleReadSerializer(serializers.ModelSerializer):
 
 
 class TitleWriteSerializer(serializers.ModelSerializer):
-    """
-    Только для записи данных.
-
+    """Только для записи данных.
     Возаращает JSON-данные всех полей модели Title
     для эндпоинта api/v1/titles/.
     """
+
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all()
@@ -85,11 +83,6 @@ class TitleWriteSerializer(serializers.ModelSerializer):
             'category'
         )
         model = Title
-
-    def validate_year(self, value):
-        if value > timezone.now().year:
-            raise serializers.ValidationError('Проверьте год создания!')
-        return value
 
 
 class ReviewSerializer(serializers.ModelSerializer):
