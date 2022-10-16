@@ -4,21 +4,32 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets, filters, mixins
 from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework_simplejwt.tokens import AccessToken
 
 from reviews.models import Title, Genre, Category, Review
 from users.models import User
-from users.utils import generate_activation_code, send_mail_in_user
-from users.utils import token_verification
-
-from api.v1.serializers import TitleReadSerializer, TitleWriteSerializer
-from api.v1.serializers import GenreSerializer, CategorySerializer
-from api.v1.serializers import ReviewSerializer, CommentSerializer
-from api.v1.serializers import SendMailSerializer, ApiTokenSerializer, UserSerializer
-   
+from users.utils import (
+    generate_activation_code,
+    send_mail_in_user,
+    token_verification,
+)
+from api.v1.serializers import (
+    TitleReadSerializer,
+    TitleWriteSerializer,
+    GenreSerializer,
+    CategorySerializer,
+    ReviewSerializer,
+    CommentSerializer,
+    SendMailSerializer,
+    ApiTokenSerializer,
+    UserSerializer,
+)
 from api.v1.permissions import AdminOnly, IsAuthorOrStaffOrReadOnly, ReadOnly
 from api.v1.filters import TitleGenreFilter
 
@@ -66,7 +77,7 @@ class CategoryViewSet(
     viewsets.GenericViewSet
 ):
     """ Позволяет получить список, создать или удалить категорию.
-    Обрабатывает все запросы для эндпоинта api/v1/categories/. 
+    Обрабатывает все запросы для эндпоинта api/v1/categories/.
     """
 
     permission_classes = (AdminOnly | ReadOnly,)
@@ -120,7 +131,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(
             author=self.request.user,
-            review=self.get_title_and_review_id()
+            review=self.get_review()
         )
 
 
@@ -128,7 +139,6 @@ class CommentViewSet(viewsets.ModelViewSet):
 @permission_classes([AllowAny])
 def send_code(request,):
     """Функция регистрации пользователя и отправки кода подтверждения."""
-
     serializer = SendMailSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.validated_data['email']
@@ -155,7 +165,6 @@ def send_code(request,):
 @permission_classes([AllowAny])
 def get_jwt_token(request,):
     """Функция проверки кода подтверждения и выдачи токена."""
-
     serializer = ApiTokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     username = serializer.validated_data['username']

@@ -6,10 +6,13 @@ from django.utils import timezone
 
 from users.models import User
 
-def validate_year(self, value):
+
+def validate_year(value):
+    """Проверка невозможности указать год больше текущего."""
     if value > timezone.now().year:
         raise ValidationError('Проверьте год создания!')
     return value
+
 
 class Review(models.Model):
     """Модель, определяющая состав полей отзывов на произведение."""
@@ -17,7 +20,6 @@ class Review(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='reviews',
         verbose_name='Автор'
     )
     title = models.ForeignKey(
@@ -61,9 +63,9 @@ class Review(models.Model):
 class Title(models.Model):
     """Модель, определяющая состав полей произведения."""
 
-    name = models.TextField()
+    name = models.TextField(verbose_name='Название произведения')
     year = models.PositiveSmallIntegerField(
-        validators=[MaxValueValidator(validators=[validate_year])],
+        validators=[validate_year],
         verbose_name='Год создания'
     )
     description = models.TextField(
@@ -97,11 +99,13 @@ class TitleGenre(models.Model):
 
     genre = models.ForeignKey(
         'Genre',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Жанр'
     )
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
+        verbose_name='Произведение'
     )
 
     def __str__(self):
@@ -149,7 +153,8 @@ class Genre(models.Model):
 
 
 class Comment(models.Model):
-    """"Модель, определяющая состав полей комментариев к отзывам на произведение."""
+    """"Модель, определяющая состав полей комментариев к отзывам."""
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

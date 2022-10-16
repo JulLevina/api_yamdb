@@ -1,6 +1,4 @@
-from django.utils import timezone
 from django.conf import settings
-from django.db.models import Q
 from rest_framework import serializers
 
 from reviews.models import Title, Genre, Category, Review, Comment
@@ -109,6 +107,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
 
     def validate(self, data):
+        """Проверка невозможности дважды оставить отзыв на произведение."""
         if self.context['request'].method != 'POST':
             return data
         title_id = self.context['request'].parser_context['kwargs']['title_id']
@@ -156,7 +155,6 @@ class SendMailSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """Проверка, соответствия username на допустимость."""
-
         username = data['username']
         if username.lower() == settings.RESERVED_NAME:
             raise serializers.ValidationError(
