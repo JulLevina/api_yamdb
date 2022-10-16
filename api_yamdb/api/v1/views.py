@@ -4,41 +4,29 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets, filters, mixins
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
-from rest_framework.permissions import (
-    AllowAny,
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework_simplejwt.tokens import AccessToken
 
 from reviews.models import Title, Genre, Category, Review
 from users.models import User
-from users.utils import (
-    generate_activation_code,
-    send_mail_in_user,
-    token_verification,
-)
-from api.v1.serializers import (
-    TitleReadSerializer,
-    TitleWriteSerializer,
-    GenreSerializer,
-    CategorySerializer,
-    ReviewSerializer,
-    CommentSerializer,
-    SendMailSerializer,
-    ApiTokenSerializer,
-    UserSerializer,
-)
+from users.utils import generate_activation_code, send_mail_in_user
+from users.utils import token_verification
+
+from api.v1.serializers import TitleReadSerializer, TitleWriteSerializer
+from api.v1.serializers import GenreSerializer, CategorySerializer
+from api.v1.serializers import ReviewSerializer, CommentSerializer
+from api.v1.serializers import SendMailSerializer, ApiTokenSerializer, UserSerializer
+   
 from api.v1.permissions import AdminOnly, IsAuthorOrStaffOrReadOnly, ReadOnly
 from api.v1.filters.title_filters import TitleGenreFilter
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    """
-    Выполняет все операции с произведениями.
-
+    """Выполняет все операции с произведениями.
     Обрабатывает все запросы для эндпоинта api/v1/titles/.
     """
+
     permission_classes = (AdminOnly | ReadOnly,)
     queryset = Title.objects.annotate(
         rating=Avg('reviews__score')
@@ -47,7 +35,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     filterset_class = TitleGenreFilter
 
     def get_serializer_class(self):
-        if self.action in ['create', 'partial_update']:
+        if self.action in {'create', 'partial_update'}:
             return TitleWriteSerializer
         return TitleReadSerializer
 
@@ -58,13 +46,12 @@ class GenreViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    """
-    Выполняет все операции с жанрами.
-
+    """Выполняет все операции с жанрами.
     Обрабатывает все запросы для эндпоинта api/v1/genres/.
     """
+
     permission_classes = (AdminOnly | ReadOnly,)
-    queryset = Genre.objects.all().order_by('name')
+    queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
@@ -77,13 +64,12 @@ class CategoryViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    """
-    Выполняет все операции с категориями.
-
+    """Выполняет все операции с категориями.
     Обрабатывает все запросы для эндпоинта api/v1/categories/.
     """
+
     permission_classes = (AdminOnly | ReadOnly,)
-    queryset = Category.objects.all().order_by('name')
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
     lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
@@ -91,12 +77,11 @@ class CategoryViewSet(
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    """
-    Выполняет все операции с отзывами.
-
+    """Выполняет все операции с отзывами.
     Обрабатывает запросы 'get', 'post', 'patch', 'delete'
     для эндпоинта api/v1/titles/{title_id}/reviews.
     """
+
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrStaffOrReadOnly)
     serializer_class = ReviewSerializer
     http_method_names = ('get', 'post', 'patch', 'delete',)
@@ -113,12 +98,11 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    """
-    Выполняет все операции с комментариями.
-
+    """Выполняет все операции с комментариями.
     Обрабатывает запросы 'get', 'post', 'patch', 'delete' для
     эндпоинта api/v1/titles/{title_id}/reviews/{review_id}/comments.
     """
+
     permission_classes = (IsAuthenticatedOrReadOnly, IsAuthorOrStaffOrReadOnly)
     serializer_class = CommentSerializer
     http_method_names = ('get', 'post', 'patch', 'delete',)
@@ -144,6 +128,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 @permission_classes([AllowAny])
 def send_code(request):
     """Функция регистрации пользователя и отправки кода подтверждения."""
+
     serializer = SendMailSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     email = serializer.validated_data.get('email')
