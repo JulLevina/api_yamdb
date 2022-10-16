@@ -1,11 +1,14 @@
 import os
 import csv
 
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.conf import settings
 
 from reviews.models import Title, Genre, Category, Review, Comment, TitleGenre
 from users.models import User
+
+call_command('migrate')
 
 DATA_LIST = {
     Category: 'category.csv',

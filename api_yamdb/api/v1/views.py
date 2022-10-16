@@ -20,12 +20,11 @@ from api.v1.serializers import ReviewSerializer, CommentSerializer
 from api.v1.serializers import SendMailSerializer, ApiTokenSerializer, UserSerializer
    
 from api.v1.permissions import AdminOnly, IsAuthorOrStaffOrReadOnly, ReadOnly
-from api.v1.filters.title_filters import TitleGenreFilter
+from api.v1.filters import TitleGenreFilter
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     """Выполняет все операции с произведениями.
-
     Обрабатывает все запросы для эндпоинта api/v1/titles/.
     """
 
@@ -49,7 +48,6 @@ class GenreViewSet(
     viewsets.GenericViewSet
 ):
     """Выполняет все операции с жанрами.
-
     Обрабатывает все запросы для эндпоинта api/v1/genres/.
     """
 
@@ -68,7 +66,6 @@ class CategoryViewSet(
     viewsets.GenericViewSet
 ):
     """ Позволяет получить список, создать или удалить категорию.
-
     Обрабатывает все запросы для эндпоинта api/v1/categories/. 
     """
 
@@ -81,7 +78,8 @@ class CategoryViewSet(
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    """Выполняет все операции с отзывами.
+    """
+    Выполняет все операции с отзывами.
     Обрабатывает запросы 'get', 'post', 'patch', 'delete'
     для эндпоинта api/v1/titles/{title_id}/reviews.
     """
@@ -111,15 +109,13 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     http_method_names = ('get', 'post', 'patch', 'delete',)
 
-    def get_title_and_review_id(self):
+    def get_review(self):
         title_id = self.kwargs.get('title_id')
         review_id = self.kwargs.get('review_id')
         return get_object_or_404(Review, pk=review_id, title_id=title_id)
 
     def get_queryset(self):
-        return (
-            self.get_title_and_review_id().comments.all().order_by('pub_date')
-        )
+        return self.get_review().comments.all()
 
     def perform_create(self, serializer):
         serializer.save(
