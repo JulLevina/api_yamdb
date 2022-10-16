@@ -25,6 +25,7 @@ from api.v1.filters.title_filters import TitleGenreFilter
 
 class TitleViewSet(viewsets.ModelViewSet):
     """Выполняет все операции с произведениями.
+
     Обрабатывает все запросы для эндпоинта api/v1/titles/.
     """
 
@@ -48,6 +49,7 @@ class GenreViewSet(
     viewsets.GenericViewSet
 ):
     """Выполняет все операции с жанрами.
+
     Обрабатывает все запросы для эндпоинта api/v1/genres/.
     """
 
@@ -65,8 +67,9 @@ class CategoryViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet
 ):
-    """Выполняет все операции с категориями.
-    Обрабатывает все запросы для эндпоинта api/v1/categories/.
+    """ Позволяет получить список, создать или удалить категорию.
+
+    Обрабатывает все запросы для эндпоинта api/v1/categories/. 
     """
 
     permission_classes = (AdminOnly | ReadOnly,)
