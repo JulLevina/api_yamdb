@@ -50,6 +50,8 @@ MIDDLEWARE = [
 
 SHOW_REVIEW_NUMBER_OF_CHARACTERS = 15
 
+SHOW_COMMENT_NUMBER_OF_CHARACTERS = 15
+
 ROOT_URLCONF = 'api_yamdb.urls'
 
 TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
@@ -126,4 +128,35 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'formatter': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': '[%(name)s %(asctime)s %(filename)s: %(lineno)d - %(funcName)s()] %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'formatter',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ('console',),
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ('console',),
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
 }

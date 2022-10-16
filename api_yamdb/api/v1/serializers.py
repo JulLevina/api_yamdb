@@ -9,9 +9,10 @@ from users.models import User
 
 class CategorySerializer(serializers.ModelSerializer):
     """
-    Возаращает JSON-данные всех полей модели Category
+    Возвращает JSON-данные всех полей модели Category
     для эндпоинта api/v1/categories/.
     """
+
     class Meta:
         fields = (
             'name',
@@ -22,9 +23,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class GenreSerializer(serializers.ModelSerializer):
     """
-    Возаращает JSON-данные всех полей модели Genre
+    Возвращает JSON-данные всех полей модели Genre
     для эндпоинта api/v1/genres/.
     """
+
     class Meta:
         fields = (
             'name',
@@ -37,10 +39,11 @@ class TitleReadSerializer(serializers.ModelSerializer):
     """
     Только для чтения данных.
 
-    Возаращает JSON-данные всех полей модели Title
+    Возвращает JSON-данные всех полей модели Title
     для эндпоинта api/v1/titles/.
     Добавляет новое поле rating.
     """
+
     rating = serializers.IntegerField(read_only=True)
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(read_only=True, many=True)
@@ -62,9 +65,10 @@ class TitleWriteSerializer(serializers.ModelSerializer):
     """
     Только для записи данных.
 
-    Возаращает JSON-данные всех полей модели Title
+    Возвращает JSON-данные всех полей модели Title
     для эндпоинта api/v1/titles/.
     """
+
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all()
@@ -94,9 +98,10 @@ class TitleWriteSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     """
-    Возаращает JSON-данные всех полей модели Reviews
+    Возвращает JSON-данные всех полей модели Reviews
     для эндпоинта api/v1/titles/{title_id}/reviews/.
     """
+
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field='username'
@@ -129,6 +134,7 @@ class CommentSerializer(serializers.ModelSerializer):
     Возаращает JSON-данные всех полей модели Comment
     для эндпоинта api/v1/titles/{title_id}/reviews/{review_id}/commrnts.
     """
+
     author = serializers.SlugRelatedField(
         read_only=True,
         slug_field='username'

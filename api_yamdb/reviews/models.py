@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.validators import MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -7,6 +7,8 @@ from users.models import User
 
 
 class Review(models.Model):
+    """Модель, определяющая состав полей отзывов на произведение."""
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -22,6 +24,10 @@ class Review(models.Model):
     text = models.TextField(verbose_name='Текст отзыва')
     score = models.PositiveSmallIntegerField(
         validators=[
+            MinValueValidator(
+                1,
+                'Максимально низкая оценка %(limit_value)s!'
+            ),
             MaxValueValidator(
                 10,
                 'Максимально высокая оценка %(limit_value)s!'
@@ -130,6 +136,7 @@ class Genre(models.Model):
 
 
 class Comment(models.Model):
+    """"Модель, определяющая состав полей комментариев к отзывам на произведение."""
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -154,4 +161,4 @@ class Comment(models.Model):
         verbose_name_plural = 'Коментарии'
 
     def __str__(self) -> str:
-        return self.text
+        return self.text[:settings.SHOW_COMMENT_NUMBER_OF_CHARACTERS]
