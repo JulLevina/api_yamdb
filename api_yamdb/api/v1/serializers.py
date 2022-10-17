@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from rest_framework import serializers
 
 from reviews.models import Title, Genre, Category, Review, Comment
@@ -142,7 +143,12 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class SendMailSerializer(serializers.ModelSerializer):
     """Сериализатор для регистрации пользователя и отправки кода."""
-    username = serializers.CharField()
+
+    username_validator = UnicodeUsernameValidator()
+    
+    username = serializers.CharField(
+        validators=[username_validator],
+    )
     email = serializers.EmailField()
 
     class Meta:
@@ -152,18 +158,18 @@ class SendMailSerializer(serializers.ModelSerializer):
             'email'
         )
 
-    def validate(self, data):
+    def validate_username(self, value):
         """Проверка, соответствия username на допустимость."""
-        username = data['username']
-        if username.lower() == settings.RESERVED_NAME:
+        if value.lower() == settings.RESERVED_NAME:
             raise serializers.ValidationError(
                 {'detail': 'Данное имя использовать запрещено!'}
             )
-        return data
+        return value
 
 
 class ApiTokenSerializer(serializers.ModelSerializer):
     """Сериализатор для отправки токена зарегистрированному пользователю."""
+    
     username = serializers.CharField()
     confirmation_code = serializers.CharField()
 
