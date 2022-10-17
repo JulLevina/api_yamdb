@@ -19,7 +19,7 @@ def token_verification(user, confirmation_code):
 
 
 def send_mail_in_user(**kwargs):
-    """Функция отправки письма пользователю."""
+    """Функция отправки информационного письма пользователю."""
 
     message = (
         f'Письмо с кодом для получения токена,'
