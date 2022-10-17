@@ -154,7 +154,7 @@ class SendMailSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        """Проверка, соответствия username на допустимость использования."""
+        """Проверка, соответствия username на допустимость."""
         username = data['username']
         if username.lower() == settings.RESERVED_NAME:
             raise serializers.ValidationError(
@@ -163,14 +163,14 @@ class SendMailSerializer(serializers.ModelSerializer):
         return data
 
 
-class ApiTokenSerializer(serializers.ModelSerializer):
+class ApiTokenSerializer(serializers.Serializer):
     """Сериализатор для отправки токена зарегистрированному пользователю."""
 
+    username = serializers.CharField()
     confirmation_code = serializers.CharField()
 
     class Meta:
-        model = User
-        fields = ('username', 'confirmation_code')
+        fields = ('username', 'email')
 
 
 class UserSerializer(serializers.ModelSerializer):
