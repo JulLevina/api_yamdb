@@ -145,7 +145,7 @@ class SendMailSerializer(serializers.ModelSerializer):
     """Сериализатор для регистрации пользователя и отправки кода."""
 
     username_validator = UnicodeUsernameValidator()
-    
+
     username = serializers.CharField(
         validators=[username_validator],
     )
@@ -169,7 +169,7 @@ class SendMailSerializer(serializers.ModelSerializer):
 
 class ApiTokenSerializer(serializers.ModelSerializer):
     """Сериализатор для отправки токена зарегистрированному пользователю."""
-    
+
     username = serializers.CharField()
     confirmation_code = serializers.CharField()
 
