@@ -5,6 +5,16 @@ from django.core.mail import send_mail
 
 logger = logging.getLogger(__name__)
 
+MESSAGE = (
+    'Письмо с кодом для получения токена,'
+    ' отправлено пользователю {username},'
+    ' на почтовый ящик {email}'
+)
+MESSAGE_MAIL = (
+    'Добро пожаловать, {username}! Ваш код для получения JWT-токена:'
+    '{confirmation_code}'
+)
+
 
 def generate_activation_code(user):
     """Генератор кода для получения Токена."""
@@ -18,20 +28,18 @@ def token_verification(user, confirmation_code):
     return default_token_generator.check_token(user, confirmation_code)
 
 
-def send_mail_in_user(**kwargs):
+def send_mail_in_user(username, email, confirmation_code):
     """Функция отправки письма пользователю."""
-
-    message = (
-        f'Письмо с кодом для получения токена,'
-        f' отправлено пользователю {kwargs["username"]},'
-        f' на почтовый ящик {kwargs["email"]}'
-    )
     send_mail(
         subject='Confirmation_code',
-        message=f'Добро пожаловать, {kwargs["username"]}!'
-                f' Ваш код для получения JWT-токена:'
-                f' {kwargs["confirmation_code"]}',
+        message=MESSAGE_MAIL.format(
+            username=username,
+            confirmation_code=confirmation_code,
+        ),
         from_email=None,
-        recipient_list=[f'{kwargs["email"]}']
+        recipient_list=[email]
     )
-    logger.info(message)
+    logger.info(MESSAGE.format(
+        username=username,
+        email=email,
+    ))

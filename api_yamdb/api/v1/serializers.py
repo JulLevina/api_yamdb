@@ -143,9 +143,6 @@ class CommentSerializer(serializers.ModelSerializer):
 class SendMailSerializer(serializers.ModelSerializer):
     """Сериализатор для регистрации пользователя и отправки кода."""
 
-    email = serializers.EmailField()
-    username = serializers.CharField()
-
     class Meta:
         model = User
         fields = (
