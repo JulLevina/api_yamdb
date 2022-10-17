@@ -162,7 +162,7 @@ class SendMailSerializer(serializers.ModelSerializer):
 
 class ApiTokenSerializer(serializers.ModelSerializer):
     """Сериализатор для отправки токена зарегистрированному пользователю."""
-    # username = serializers.CharField()
+    username = serializers.CharField()
     confirmation_code = serializers.CharField()
 
     class Meta:
