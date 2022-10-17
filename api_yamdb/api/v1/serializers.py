@@ -163,14 +163,14 @@ class SendMailSerializer(serializers.ModelSerializer):
         return data
 
 
-class ApiTokenSerializer(serializers.Serializer):
+class ApiTokenSerializer(serializers.ModelSerializer):
     """Сериализатор для отправки токена зарегистрированному пользователю."""
 
-    username = serializers.CharField()
     confirmation_code = serializers.CharField()
 
     class Meta:
-        fields = ('username', 'email')
+        model = User
+        fields = ('username', 'confirmation_code')
 
 
 class UserSerializer(serializers.ModelSerializer):
