@@ -154,7 +154,7 @@ class SendMailSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        """Проверка, соответствия username на допустимость."""
+        """Проверка, соответствия username на допустимость использования."""
         username = data['username']
         if username.lower() == settings.RESERVED_NAME:
             raise serializers.ValidationError(
