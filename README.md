@@ -28,7 +28,6 @@ python manage.py makemigrations
 ```
 python manage.py migrate
 ```
-- 
 - В папке с файлом manage.py выполните команду для заполнения базы данных тестовыми данными:
 ```
 python manage.py csv_command
